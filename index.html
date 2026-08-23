@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Amazon UK 派对类目机会监控中心</title>
 <link rel="stylesheet" href="style.css?v=20260823-dual-v1">
+<link rel="stylesheet" href="structure-select.css?v=20260823-1">
 </head>
 <body>
 <div class="app-shell">
@@ -138,9 +139,18 @@
       </section>
 
       <section id="detailStructure" class="detail-panel">
-        <div class="page-head"><div><h2>产品结构趋势</h2><p>产品类型、颜色、规格、场景、材质等结构变化。</p></div></div>
+        <div class="page-head"><div><h2>产品结构趋势</h2><p>选择一个结构维度，单独查看该维度的增长、下降、主流和新出现变化。</p></div></div>
+        <div id="detailStructDimSwitch" class="structure-dim-switch">
+          <button class="active" data-dim="product_type">产品类型</button>
+          <button data-dim="colour_style">颜色风格</button>
+          <button data-dim="pack_size">数量规格</button>
+          <button data-dim="size_text">尺寸</button>
+          <button data-dim="occasion">场景</button>
+          <button data-dim="material">材质</button>
+        </div>
+        <div id="detailStructHint" class="structure-dim-hint">当前查看：产品类型</div>
         <div id="detailStructCards" class="structure-radar-grid"></div>
-        <div class="table-wrap"><table class="product-table structure-table"><thead><tr><th>维度</th><th>标签</th><th>数量</th><th>当前占比</th><th>基线</th><th>变化</th></tr></thead><tbody id="detailStructRows"></tbody></table></div>
+        <div class="table-wrap"><table class="product-table structure-table"><thead><tr><th>标签</th><th>数量</th><th>当前占比</th><th>上一轮</th><th>变化</th><th>状态</th></tr></thead><tbody id="detailStructRows"></tbody></table></div>
       </section>
 
       <section id="detailMid" class="detail-panel">
@@ -154,5 +164,6 @@
   <footer>比较原则：两个类目必须采用同口径、近似时间窗口的数据才进行横向判断。Party Packs 未采集时所有相关位置明确显示“待采集”，不使用示例数据冒充真实市场数据。</footer>
 </div>
 <script src="app.js?v=20260823-dual-v1"></script>
+<script src="structure-select.js?v=20260823-1"></script>
 </body>
 </html>
