@@ -3,129 +3,156 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UK Party Balloons 类目异动监控</title>
-<link rel="stylesheet" href="style.css?v=20260821-v2">
+<title>Amazon UK 派对类目机会监控中心</title>
+<link rel="stylesheet" href="style.css?v=20260823-dual-v1">
 </head>
 <body>
 <div class="app-shell">
   <header class="topbar">
     <div>
-      <div class="eyebrow">Amazon UK · Party Balloons</div>
-      <h1>类目异动监控</h1>
-      <div class="subtitle">Supabase 动态后台 · 每5分钟刷新</div>
+      <div class="eyebrow">Amazon UK · Party Category Intelligence</div>
+      <h1>英国站派对类目机会监控中心</h1>
+      <div class="subtitle">Party Balloons × Party Packs · Supabase 动态后台 · 每5分钟刷新</div>
     </div>
     <div class="market-state">
-      <span id="livePill" class="status-pill">正在连接…</span>
-      <div id="marketLights" class="state-lights"></div>
+      <span id="globalStatus" class="status-pill">正在连接…</span>
+      <div id="syncStatus" class="sync-mini">等待双类目数据</div>
     </div>
   </header>
 
-  <nav class="tabs" aria-label="监控页面">
-    <button class="active" data-tab="overview">类目总览</button>
-    <button data-tab="changes">异动 ASIN</button>
-    <button data-tab="structure">结构变化</button>
-    <button data-tab="mid">#200–400 潜力</button>
+  <nav class="category-tabs" aria-label="类目切换">
+    <button class="active" data-category="compare">双类目总览</button>
+    <button data-category="party_balloons">Party Balloons</button>
+    <button data-category="party_packs">Party Packs <span id="packsDot" class="tiny-dot pending"></span></button>
   </nav>
 
   <main>
-    <section id="overview" class="panel active">
-      <div id="smartSummary" class="smart-summary">
-        <div class="summary-icon">✦</div>
-        <div><div class="summary-kicker">智能市场摘要</div><div id="summaryText" class="summary-text">正在分析最新一轮采集数据…</div></div>
-        <div id="summaryTime" class="summary-time">—</div>
-      </div>
-
-      <div class="kpi-grid">
-        <article class="metric-card accent-blue"><div class="metric-label">排名≤100 ASIN样本</div><div id="kTop" class="metric-value">—</div><div id="kTopDelta" class="metric-note">当前头部样本</div></article>
-        <article class="metric-card"><div class="metric-label">#200–400 潜力池</div><div id="kMid" class="metric-value">—</div><div id="kMidDelta" class="metric-note">重点观察突破#200</div></article>
-        <article class="metric-card"><div class="metric-label">有效 ASIN</div><div id="kTotal" class="metric-value">—</div><div class="metric-note">最新完整批次</div></article>
-        <article class="metric-card"><div class="metric-label">价格中位数</div><div id="kPrice" class="metric-value">—</div><div class="metric-note">当前样本</div></article>
-        <article class="metric-card"><div class="metric-label">Top100样本换手率</div><div id="kChurn" class="metric-value">—</div><div id="kChurnNote" class="metric-note">新进 / 退出</div></article>
-        <article class="metric-card accent-red"><div class="metric-label">P0 上升机会</div><div id="kP0" class="metric-value">—</div><div class="metric-note">突破 / 极速前移</div></article>
-        <article class="metric-card"><div class="metric-label">Top100 ≤180天新品占比</div><div id="kYoungShare" class="metric-value">—</div><div class="metric-note">新品进入能力</div></article>
-        <article class="metric-card"><div class="metric-label">最近采集</div><div id="kTime" class="metric-value time-value">—</div><div id="kPrevTime" class="metric-note">与上一轮对比</div></article>
+    <section id="comparePanel" class="category-panel active">
+      <div class="dual-summary">
+        <div class="summary-mark">✦</div>
+        <div class="summary-main">
+          <div class="summary-kicker">英国派对市场智能摘要</div>
+          <div id="dualSummaryText" class="summary-text">正在读取 Party Balloons；Party Packs 暂未采集时会以占位状态展示。</div>
+        </div>
+        <div class="summary-times"><div><span>Party Balloons</span><b id="balloonsTime">—</b></div><div><span>Party Packs</span><b id="packsTime">待采集</b></div></div>
       </div>
 
       <section class="section-block">
-        <div class="section-head"><div><h2>今日机会雷达</h2><p>从排名动能、新品效率、价格空间和结构变化四个方向自动提炼。</p></div></div>
-        <div class="radar-grid">
-          <article class="radar-card"><div class="radar-title"><span class="radar-ico fire">↗</span>快速突破</div><div id="radarBreakout" class="radar-body"></div></article>
-          <article class="radar-card"><div class="radar-title"><span class="radar-ico sprout">✦</span>新品潜力</div><div id="radarNew" class="radar-body"></div></article>
-          <article class="radar-card"><div class="radar-title"><span class="radar-ico money">£</span>价格机会</div><div id="radarPrice" class="radar-body"></div></article>
-          <article class="radar-card"><div class="radar-title"><span class="radar-ico structure">◆</span>结构机会</div><div id="radarStructure" class="radar-body"></div></article>
+        <div class="section-head"><div><h2>双类目核心盘面</h2><p>两个类目采用完全相同的指标口径，便于同步横向观察。</p></div><div id="compareHint" class="section-side">Party Packs 待首次采集</div></div>
+        <div class="category-compare-grid">
+          <article class="category-board balloons-board">
+            <div class="category-board-head"><div><span class="category-label">PARTY BALLOONS</span><h3>气球类目</h3></div><span id="balloonsState" class="board-state live">实时</span></div>
+            <div class="board-metrics">
+              <div><span>排名≤100</span><b id="bTop">—</b><small id="bTopDelta">—</small></div>
+              <div><span>#200–400</span><b id="bMid">—</b><small id="bMidDelta">—</small></div>
+              <div><span>有效 ASIN</span><b id="bTotal">—</b><small>完整批次</small></div>
+              <div><span>价格中位数</span><b id="bPrice">—</b><small>当前样本</small></div>
+              <div><span>Top100换手</span><b id="bChurn">—</b><small>新进 / 退出</small></div>
+              <div><span>P0机会</span><b id="bP0">—</b><small>突破 / 极速前移</small></div>
+              <div><span>≤180天新品</span><b id="bYoung">—</b><small>Top100新品占比</small></div>
+              <div><span>机会指数</span><b id="bIndex">—</b><small>规则评分 /100</small></div>
+            </div>
+          </article>
+
+          <article class="category-board packs-board pending-board" id="packsBoard">
+            <div class="category-board-head"><div><span class="category-label">PARTY PACKS</span><h3>派对套装类目</h3></div><span id="packsState" class="board-state pending">待采集</span></div>
+            <div class="board-metrics">
+              <div><span>排名≤100</span><b id="pTop">—</b><small id="pTopDelta">等待数据</small></div>
+              <div><span>#200–400</span><b id="pMid">—</b><small id="pMidDelta">等待数据</small></div>
+              <div><span>有效 ASIN</span><b id="pTotal">—</b><small>等待完整批次</small></div>
+              <div><span>价格中位数</span><b id="pPrice">—</b><small>等待样本</small></div>
+              <div><span>Top100换手</span><b id="pChurn">—</b><small>等待两轮数据</small></div>
+              <div><span>P0机会</span><b id="pP0">—</b><small>等待异动</small></div>
+              <div><span>≤180天新品</span><b id="pYoung">—</b><small>等待新品数据</small></div>
+              <div><span>机会指数</span><b id="pIndex">—</b><small>待首次采集</small></div>
+            </div>
+            <div id="packsPlaceholder" class="pending-overlay"><strong>Party Packs 数据待采集</strong><span>页面结构已经准备好；首次写入 category_key=party_packs 后自动填充。</span></div>
+          </article>
         </div>
       </section>
 
-      <div class="analysis-grid section-block">
-        <article class="analysis-card">
-          <div class="card-head"><div><h2>新品进入能力</h2><p>判断类目是否仍给新品留下突破通道。</p></div><span id="newBadge" class="soft-badge">新品通道活跃度</span></div>
-          <div id="newMetrics" class="mini-metrics"></div>
-          <div id="newInsight" class="insight-line"></div>
-        </article>
-        <article class="analysis-card">
-          <div class="card-head"><div><h2>竞争进入门槛</h2><p>比较排名≤100与潜力池的评论、上架时间、价格和销量门槛。</p></div></div>
-          <div class="table-scroll"><table class="compact-table"><thead><tr><th>指标</th><th>≤100</th><th>#200–400</th></tr></thead><tbody id="thresholdRows"></tbody></table></div>
-        </article>
-        <article class="analysis-card">
-          <div class="card-head"><div><h2>价格带机会</h2><p>看哪个价格带更容易进入头部、出现新品和强前移。</p></div></div>
-          <div class="table-scroll"><table class="compact-table"><thead><tr><th>价格带</th><th>ASIN</th><th>≤100率</th><th>新品率</th><th>强前移率</th></tr></thead><tbody id="priceRows"></tbody></table></div>
-        </article>
-        <article class="analysis-card">
-          <div class="card-head"><div><h2>品牌集中度 & 结构预警</h2><p>识别品牌集中度与增长最快的产品结构。</p></div></div>
-          <div id="brandMetrics" class="mini-metrics brand-mini"></div>
-          <div class="sub-label">增长最快结构</div><div id="growthChips" class="growth-chips"></div>
-        </article>
-      </div>
-
       <section class="section-block">
-        <div class="section-head"><div><h2>今日机会 Top 10</h2><p>综合排名速度、当前位置、新品程度、销量、评论门槛和结构趋势进行规则评分。</p></div><div id="opportunityNote" class="section-side">—</div></div>
-        <div class="table-wrap"><table class="product-table opportunity-table"><thead><tr><th>商品</th><th>机会分</th><th>机会类型</th><th>当前排名</th><th>本轮变化</th><th>三轮走势</th><th>上架天数</th><th>评论</th><th>销量</th><th>值得看原因</th></tr></thead><tbody id="opportunityRows"></tbody></table></div>
+        <div class="section-head"><div><h2>今日类目机会指数</h2><p>从新品进入、排名突破、#200–400活跃度、换手、价格与结构变化综合形成规则指数。</p></div></div>
+        <div class="index-compare">
+          <div class="index-row"><div class="index-name"><b>Party Balloons</b><span id="bIndexText">—</span></div><div class="index-track"><span id="bIndexBar"></span></div></div>
+          <div class="index-row"><div class="index-name"><b>Party Packs</b><span id="pIndexText">待采集</span></div><div class="index-track pending-track"><span id="pIndexBar"></span></div></div>
+        </div>
       </section>
 
       <section class="section-block">
-        <div class="section-head"><div><h2>市场机会矩阵</h2><p>增长动能 × 当前结构占比。占比作为竞争强度代理，用于快速筛选方向，不等同真实竞争度。</p></div></div>
-        <div class="matrix">
-          <div class="matrix-y">增长动能 ↑</div>
-          <div class="matrix-grid">
-            <article class="quadrant q-enter"><div class="quad-title">重点进入</div><div class="quad-sub">高增长 · 低占比</div><div id="qEnter" class="quad-chips"></div></article>
-            <article class="quadrant q-strong"><div class="quad-title">强势赛道</div><div class="quad-sub">高增长 · 高占比</div><div id="qStrong" class="quad-chips"></div></article>
-            <article class="quadrant q-watch"><div class="quad-title">蓝海观察</div><div class="quad-sub">低增长 · 低占比</div><div id="qWatch" class="quad-chips"></div></article>
-            <article class="quadrant q-mature"><div class="quad-title">成熟 / 红海</div><div class="quad-sub">低增长 · 高占比</div><div id="qMature" class="quad-chips"></div></article>
-          </div>
-          <div class="matrix-x">竞争强度代理 →</div>
+        <div class="section-head"><div><h2>双类目机会雷达</h2><p>同口径比较：快速突破、新品潜力、价格机会、结构变化与场景活跃度。</p></div></div>
+        <div class="dual-radar">
+          <div class="radar-head"><span>维度</span><b>Party Balloons</b><b>Party Packs</b></div>
+          <div class="radar-row"><span>🚀 快速突破</span><div id="bRadarBreak">—</div><div id="pRadarBreak" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>🌱 新品潜力</span><div id="bRadarNew">—</div><div id="pRadarNew" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>💰 价格机会</span><div id="bRadarPrice">—</div><div id="pRadarPrice" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>🧩 结构机会</span><div id="bRadarStruct">—</div><div id="pRadarStruct" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>🎯 场景活跃</span><div id="bRadarScene">—</div><div id="pRadarScene" class="pending-text">待采集</div></div>
         </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head"><div><h2>跨类目场景趋势</h2><p>只比较两个类目都能识别的场景标签；没有 Party Packs 数据前不做伪比较。</p></div><div id="sceneNote" class="section-side">等待 Party Packs</div></div>
+        <div id="sceneCompare" class="scene-grid">
+          <div class="scene-placeholder"><b>Birthday</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+          <div class="scene-placeholder"><b>Baby Shower</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+          <div class="scene-placeholder"><b>Wedding</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+          <div class="scene-placeholder"><b>Hen Party</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head"><div><h2>英国 Party Market 今日机会 Top 10</h2><p>两个类目合并竞争开发注意力；Party Packs 未采集前榜单仅显示 Balloons。</p></div><div id="marketTopNote" class="section-side">—</div></div>
+        <div class="table-wrap"><table class="product-table market-table"><thead><tr><th>类目</th><th>商品</th><th>机会分</th><th>当前排名</th><th>本轮变化</th><th>上架天数</th><th>评论</th><th>销量</th><th>值得看原因</th></tr></thead><tbody id="marketTopRows"><tr><td colspan="9" class="empty">正在读取…</td></tr></tbody></table></div>
       </section>
 
       <div class="quality-grid section-block">
-        <article class="analysis-card"><h2>数据质量</h2><div id="qualityMetrics" class="mini-metrics quality-mini"></div></article>
-        <article class="analysis-card"><h2>数据源状态</h2><div id="sourceStatus" class="source-box">正在读取…</div></article>
+        <article class="analysis-card"><div class="card-head"><div><h2>Party Balloons 数据质量</h2><p id="bQualityTime">—</p></div></div><div id="bQuality" class="mini-metrics quality-mini"></div></article>
+        <article class="analysis-card pending-quality"><div class="card-head"><div><h2>Party Packs 数据质量</h2><p id="pQualityTime">待首次采集</p></div></div><div id="pQuality" class="pending-quality-box">暂无数据。首次采集后这里将显示销量、主图、评论、BSR覆盖率和同步状态。</div></article>
       </div>
     </section>
 
-    <section id="changes" class="panel">
-      <div class="page-head"><div><h2>异动 ASIN 优先队列</h2><p>突破和大幅前移自动置顶，快速定位本轮最值得追踪的商品。</p></div><div id="changeCount" class="page-count">—</div></div>
-      <div class="priority-grid"><article class="priority-card p0"><span>P0关键突破</span><b id="p0Count">—</b></article><article class="priority-card p1"><span>P1强异动</span><b id="p1Count">—</b></article><article class="priority-card p2"><span>P2明显异动</span><b id="p2Count">—</b></article><article class="priority-card p3"><span>P3一般波动</span><b id="p3Count">—</b></article></div>
-      <div class="filters"><input id="changeSearch" placeholder="搜索 ASIN / 标题 / 品牌"><select id="changeType"><option value="">全部产品类型</option></select><select id="changeRule"><option value="all">全部优先级</option><option value="p0">P0关键突破</option><option value="p1">P1强异动</option><option value="p2">P2明显异动</option></select></div>
-      <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>优先级</th><th>当前排名</th><th>上次排名</th><th>变化</th><th>价格</th><th>销量</th><th>评分/评论</th><th>标签</th></tr></thead><tbody id="changeRows"></tbody></table></div>
-    </section>
+    <section id="detailPanel" class="category-panel">
+      <div class="detail-head">
+        <div><div id="detailEyebrow" class="eyebrow">Amazon UK · Party Balloons</div><h2 id="detailTitle">Party Balloons 类目监控</h2><p id="detailSubtitle">独立查看该类目的总览、异动、结构与#200–400潜力。</p></div>
+        <span id="detailStatus" class="status-pill">—</span>
+      </div>
+      <nav class="detail-tabs">
+        <button class="active" data-detail="detailOverview">类目总览</button>
+        <button data-detail="detailChanges">异动 ASIN</button>
+        <button data-detail="detailStructure">结构变化</button>
+        <button data-detail="detailMid">#200–400 潜力</button>
+      </nav>
 
-    <section id="structure" class="panel">
-      <div class="page-head"><div><h2>产品结构趋势雷达</h2><p>快速增长 / 快速下降 / 当前主流 / 新出现。</p></div><div class="page-count">全部样本 · 基线=前2轮均值</div></div>
-      <div class="chip-row" id="dimChips"><button class="active" data-dim="product_type">产品类型</button><button data-dim="colour_style">颜色风格</button><button data-dim="pack_size">数量规格</button><button data-dim="size_text">尺寸</button><button data-dim="occasion">场景</button><button data-dim="material">材质</button></div>
-      <div class="structure-radar-grid"><article class="structure-card"><h3>🔥 快速增长</h3><div id="fastGrowth"></div></article><article class="structure-card"><h3>↓ 快速下降</h3><div id="fastDrop"></div></article><article class="structure-card"><h3>★ 当前主流</h3><div id="mainstream"></div></article><article class="structure-card"><h3>✦ 新出现</h3><div id="newAppear"></div></article></div>
-      <div class="table-wrap"><table class="product-table structure-table"><thead><tr><th>标签</th><th>数量</th><th>当前占比</th><th>前2轮均值</th><th>变化</th><th>三轮走势</th></tr></thead><tbody id="structureRows"></tbody></table></div>
-    </section>
+      <section id="detailOverview" class="detail-panel active">
+        <div id="detailSummary" class="smart-summary compact-summary"><div class="summary-icon">✦</div><div><div class="summary-kicker">类目智能摘要</div><div id="detailSummaryText" class="summary-text">—</div></div><div id="detailTime" class="summary-time">—</div></div>
+        <div id="detailKpis" class="kpi-grid"></div>
+        <section class="section-block"><div class="section-head"><div><h2>今日机会雷达</h2><p>排名动能、新品效率、价格空间与结构变化。</p></div></div><div id="detailRadar" class="radar-grid"></div></section>
+        <section class="section-block"><div class="section-head"><div><h2>今日机会 Top 10</h2><p>按规则机会分排序。</p></div><div id="detailTopNote" class="section-side">—</div></div><div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>机会分</th><th>机会类型</th><th>当前排名</th><th>本轮变化</th><th>上架天数</th><th>评论</th><th>销量</th><th>原因</th></tr></thead><tbody id="detailTopRows"></tbody></table></div></section>
+      </section>
 
-    <section id="mid" class="panel">
-      <div class="page-head"><div><h2>#200–400 潜力观察池</h2><p>快速前移产品自动置顶，关注即将突破#200的候选。</p></div><div id="midCount" class="page-count">—</div></div>
-      <div class="priority-grid"><article class="priority-card p0"><span>P0快速前移≥50</span><b id="midP0">—</b></article><article class="priority-card p1"><span>P1前移20–49</span><b id="midP1">—</b></article><article class="priority-card p2"><span>P2前移1–19</span><b id="midP2">—</b></article><article class="priority-card p3"><span>P3持平/后退</span><b id="midP3">—</b></article></div>
-      <div class="filters"><input id="midSearch" placeholder="搜索 ASIN / 标题 / 品牌"><select id="midType"><option value="">全部产品类型</option></select><select id="midSort"><option value="move">优先：排名前移</option><option value="score">优先：突破评分</option><option value="rank">优先：当前排名</option><option value="sales">优先：销量</option><option value="newest">优先：上架较新</option></select></div>
-      <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>优先级</th><th>当前排名</th><th>上次排名</th><th>前移</th><th>价格</th><th>销量</th><th>上架天数</th><th>突破评分</th><th>判断</th></tr></thead><tbody id="midRows"></tbody></table></div>
+      <section id="detailChanges" class="detail-panel">
+        <div class="page-head"><div><h2>异动 ASIN 优先队列</h2><p>突破和大幅前移自动置顶。</p></div><div id="detailChangeCount" class="page-count">—</div></div>
+        <div id="detailPriority" class="priority-grid"></div>
+        <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>优先级</th><th>当前排名</th><th>上次排名</th><th>变化</th><th>价格</th><th>销量</th><th>评分/评论</th><th>标签</th></tr></thead><tbody id="detailChangeRows"></tbody></table></div>
+      </section>
+
+      <section id="detailStructure" class="detail-panel">
+        <div class="page-head"><div><h2>产品结构趋势</h2><p>产品类型、颜色、规格、场景、材质等结构变化。</p></div></div>
+        <div id="detailStructCards" class="structure-radar-grid"></div>
+        <div class="table-wrap"><table class="product-table structure-table"><thead><tr><th>维度</th><th>标签</th><th>数量</th><th>当前占比</th><th>基线</th><th>变化</th></tr></thead><tbody id="detailStructRows"></tbody></table></div>
+      </section>
+
+      <section id="detailMid" class="detail-panel">
+        <div class="page-head"><div><h2>#200–400 潜力观察池</h2><p>快速前移商品自动置顶。</p></div><div id="detailMidCount" class="page-count">—</div></div>
+        <div id="detailMidPriority" class="priority-grid"></div>
+        <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>优先级</th><th>当前排名</th><th>上次排名</th><th>前移</th><th>价格</th><th>销量</th><th>上架天数</th><th>突破评分</th><th>判断</th></tr></thead><tbody id="detailMidRows"></tbody></table></div>
+      </section>
     </section>
   </main>
 
-  <footer>采样口径：Amazon UK 搜索结果 + 卖家精灵 Party Balloons BSR；“排名≤100 ASIN样本”不等同官方完整Top100榜位。</footer>
+  <footer>比较原则：两个类目必须采用同口径、近似时间窗口的数据才进行横向判断。Party Packs 未采集时所有相关位置明确显示“待采集”，不使用示例数据冒充真实市场数据。</footer>
 </div>
-<script src="app.js?v=20260821-v2"></script>
+<script src="app.js?v=20260823-dual-v1"></script>
 </body>
 </html>
