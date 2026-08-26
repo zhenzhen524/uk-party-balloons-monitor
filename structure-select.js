@@ -1,5 +1,21 @@
-document.write('<script src="structure-select-base.js?v=20260826-history1"><\/script>');
-document.write('<script src="threshold-rule.js?v=20260826-history1"><\/script>');
-document.write('<script src="parent-sales-display.js?v=20260826-parent-sales3"><\/script>');
-document.write('<script src="market-panorama.js?v=20260826-panorama2"><\/script>');
-document.write('<script src="history-brand-ui.js?v=20260826-history-brand2"><\/script>');
+/* Stable sequential loader for dashboard enhancement modules. */
+(function(){
+  const files=[
+    'structure-select-base.js?v=20260826-history3',
+    'threshold-rule.js?v=20260826-history3',
+    'parent-sales-display.js?v=20260826-parent-sales4',
+    'market-panorama.js?v=20260826-panorama3',
+    'history-brand-ui.js?v=20260826-history-brand3',
+    'history-force.js?v=20260826-history-force1'
+  ];
+  function load(i){
+    if(i>=files.length)return;
+    const s=document.createElement('script');
+    s.src=files[i];
+    s.async=false;
+    s.onload=()=>load(i+1);
+    s.onerror=()=>{console.error('模块加载失败:',files[i]);load(i+1)};
+    document.body.appendChild(s);
+  }
+  load(0);
+})();
