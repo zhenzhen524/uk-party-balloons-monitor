@@ -1,18 +1,20 @@
-/* History batch access + stronger brand hierarchy. */
+/* History & trend center + stronger brand hierarchy. */
 (function(){
   const style=document.createElement('style');
   style.textContent=`
     .product-meta-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:5px}
     .asin-code{font-size:10px;color:#98a2b3;font-weight:600;letter-spacing:.01em}
-    .brand-highlight{display:inline-flex;align-items:center;max-width:180px;padding:2px 8px;border:1px solid #c8d8ff;border-radius:999px;background:#eef4ff;color:#245dd8;font-size:11px;font-weight:800;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .history-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
-    .history-toolbar select{min-width:270px;min-height:40px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;padding:8px 11px;color:#344054;font-size:12px;font-weight:700}
-    .history-note{font-size:12px;color:#667085}
-    .history-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}
-    .history-kpi{border:1px solid #e1e6ef;border-radius:12px;background:#fff;padding:12px 14px}
-    .history-kpi span{display:block;color:#667085;font-size:11px;margin-bottom:5px}.history-kpi b{font-size:20px;color:#172033}.history-kpi small{display:block;color:#98a2b3;font-size:10px;margin-top:4px}
-    .history-empty{padding:28px;text-align:center;color:#667085}
-    @media(max-width:800px){.history-kpis{grid-template-columns:1fr 1fr}.history-toolbar select{min-width:0;width:100%}}
+    .brand-highlight{display:inline-flex;align-items:center;max-width:190px;padding:2px 8px;border:1px solid #b8ccff;border-radius:999px;background:#eef4ff;color:#174ea6;font-size:11px;font-weight:850;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .history-period-nav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.history-period-nav button{border:1px solid #d7deea;background:#fff;color:#475467;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:750;cursor:pointer}.history-period-nav button.active{background:#172033;color:#fff;border-color:#172033}
+    .history-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}.history-toolbar select,.history-toolbar input{min-height:40px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;padding:8px 11px;color:#344054;font-size:12px;font-weight:700}.history-toolbar select{min-width:270px}.history-note{font-size:12px;color:#667085}
+    .trend-summary{display:flex;gap:12px;align-items:flex-start;border:1px solid #cbd8f3;background:#f7f9ff;border-radius:14px;padding:14px 16px;margin:0 0 14px}.trend-summary .mark{font-size:18px}.trend-summary .kicker{font-size:10px;font-weight:850;letter-spacing:.04em;color:#245dd8;margin-bottom:5px}.trend-summary .text{font-size:13px;line-height:1.7;color:#27364d;font-weight:650}
+    .history-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.history-kpi{border:1px solid #e1e6ef;border-radius:12px;background:#fff;padding:12px 14px}.history-kpi span{display:block;color:#667085;font-size:11px;margin-bottom:5px}.history-kpi b{font-size:20px;color:#172033}.history-kpi small{display:block;color:#98a2b3;font-size:10px;margin-top:4px;line-height:1.45}.history-kpi .delta-up{color:#067647}.history-kpi .delta-down{color:#c43228}.history-kpi .delta-flat{color:#667085}
+    .trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}.trend-card{border:1px solid #e1e6ef;border-radius:14px;background:#fff;padding:14px}.trend-card h3{font-size:13px;margin:0 0 3px;color:#172033}.trend-card>p{margin:0 0 12px;font-size:11px;color:#667085}.mini-series{display:flex;align-items:flex-end;gap:7px;height:110px;padding-top:12px}.mini-series .pt{flex:1;min-width:0;text-align:center}.mini-series .bar-wrap{height:72px;display:flex;align-items:flex-end;justify-content:center}.mini-series .bar{width:72%;min-height:3px;background:#d9e4fb;border-radius:5px 5px 2px 2px}.mini-series .val{display:block;font-size:10px;font-weight:800;color:#344054;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mini-series .date{display:block;font-size:9px;color:#98a2b3;margin-top:3px;white-space:nowrap}
+    .history-section{border:1px solid #e1e6ef;border-radius:14px;background:#fff;padding:14px;margin:0 0 14px}.history-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.history-section-head h3{margin:0 0 3px;font-size:14px;color:#172033}.history-section-head p{margin:0;font-size:11px;color:#667085}.history-dim-switch{display:flex;gap:6px;flex-wrap:wrap}.history-dim-switch button{border:1px solid #d7deea;background:#fff;color:#667085;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:750;cursor:pointer}.history-dim-switch button.active{background:#eef4ff;border-color:#b8ccff;color:#245dd8}
+    .change-list{display:grid;gap:7px}.change-row{display:grid;grid-template-columns:minmax(110px,1.6fr) 90px 90px 90px;gap:8px;align-items:center;border-top:1px solid #eef1f5;padding-top:7px;font-size:11px}.change-row:first-child{border-top:0}.change-row .name{font-weight:800;color:#344054}.change-row .brand-name{color:#174ea6}.change-row .num{text-align:right;color:#667085}.change-row .delta{text-align:right;font-weight:850}.change-row .up{color:#067647}.change-row .down{color:#c43228}
+    .winner-list{display:grid;gap:8px}.winner-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 110px;gap:10px;align-items:center;border-top:1px solid #eef1f5;padding-top:9px}.winner-row:first-child{border-top:0}.winner-signal{font-size:10px;font-weight:800;color:#245dd8;background:#eef4ff;border-radius:999px;padding:4px 7px;display:inline-flex;justify-content:center}.winner-rank{font-size:11px;color:#475467;text-align:right}.history-empty{padding:28px;text-align:center;color:#667085}.history-mode-note{font-size:11px;color:#667085;margin:-4px 0 12px}.custom-range{display:none}.custom-range.active{display:flex}.history-batch-view{display:none}.history-batch-view.active{display:block}.history-trend-view{display:none}.history-trend-view.active{display:block}
+    @media(max-width:900px){.history-kpis{grid-template-columns:1fr 1fr}.trend-grid{grid-template-columns:1fr}.change-row{grid-template-columns:1.5fr 70px 70px 75px}.winner-row{grid-template-columns:1fr}.winner-rank{text-align:left}.history-toolbar select{min-width:0;width:100%}}
+    @media(max-width:620px){.history-period-nav{overflow:auto;flex-wrap:nowrap;padding-bottom:3px}.history-period-nav button{white-space:nowrap;flex:0 0 auto}.history-kpis{grid-template-columns:1fr 1fr}.change-row{grid-template-columns:1fr 60px 60px}.change-row .start-col{display:none}}
   `;
   document.head.appendChild(style);
 
@@ -22,72 +24,106 @@
     return `<div class="product">${img?`<img class="thumb" loading="lazy" src="${esc(img)}" alt="">`:'<div class="ph">暂无<br>主图</div>'}<div><div class="ptitle"><a href="${esc(link)}" target="_blank" rel="noopener">${esc(x.title||'未获取标题')}</a></div><div class="product-meta-row"><span class="asin-code">${esc(x.asin)}</span>${x.brand?`<span class="brand-highlight" title="${esc(x.brand)}">${esc(x.brand)}</span>`:''}</div></div></div>`;
   };
 
+  const compact=n=>{if(n==null||!Number.isFinite(Number(n)))return'—';const v=Number(n),a=Math.abs(v);if(a>=1000000)return(v/1000000).toFixed(a>=10000000?1:2).replace(/\.0+$/,'')+'M';if(a>=1000)return(v/1000).toFixed(a>=100000?0:1).replace(/\.0$/,'')+'K';return Math.round(v).toLocaleString('en-GB')};
+  const gbpCompact=n=>n==null||!Number.isFinite(Number(n))?'—':'£'+compact(n);
+  const med=a=>{const x=a.filter(v=>v!=null&&Number.isFinite(Number(v))).map(Number).sort((a,b)=>a-b);if(!x.length)return null;const m=Math.floor(x.length/2);return x.length%2?x[m]:(x[m-1]+x[m])/2};
+  const norm=s=>String(s||'未知品牌').trim().toLowerCase();
+  const dateOnly=d=>new Date(d).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+  const eligibleRows=rows=>typeof isLowValueOldListing==='function'?rows.filter(x=>!isLowValueOldListing(x)):rows;
+  function parentKey(x){return x.parent_asin?'asin:'+x.parent_asin:['heur',norm(x.brand),x.category_rank??'na',x.parent_sales_estimate??'na',x.variant_count??'na'].join('|')}
+  function groups(rows){const m=new Map();for(const x of eligibleRows(rows)){const k=parentKey(x);let g=m.get(k);if(!g){g={brand:x.brand||'未知品牌',rank:x.category_rank??null,sales:null,revenues:[],prices:[],items:[]};m.set(k,g)}g.items.push(x);if(x.category_rank!=null&&(g.rank==null||x.category_rank<g.rank))g.rank=x.category_rank;if(x.parent_sales_estimate!=null&&Number.isFinite(Number(x.parent_sales_estimate)))g.sales=Math.max(g.sales??-Infinity,Number(x.parent_sales_estimate));if(x.sales_revenue_gbp!=null&&Number.isFinite(Number(x.sales_revenue_gbp)))g.revenues.push(Number(x.sales_revenue_gbp));if(x.price_gbp!=null&&Number.isFinite(Number(x.price_gbp)))g.prices.push(Number(x.price_gbp))}return[...m.values()].map(g=>{g.revenue=med(g.revenues);if(g.revenue==null&&g.sales!=null){const p=med(g.prices);if(p!=null)g.revenue=g.sales*p}return g})}
+  function snapshot(rows){
+    rows=eligibleRows(rows);const gs=groups(rows),known=gs.filter(g=>g.sales!=null),rev=gs.filter(g=>g.revenue!=null),totalSales=known.reduce((s,g)=>s+g.sales,0),totalRevenue=rev.reduce((s,g)=>s+g.revenue,0),bm=new Map();
+    for(const g of known){if(!g.brand||g.brand==='未知品牌')continue;const k=norm(g.brand),o=bm.get(k)||{name:g.brand,sales:0};o.sales+=g.sales;bm.set(k,o)}
+    const brands=[...bm.values()].sort((a,b)=>b.sales-a.sales).map(x=>({...x,share:totalSales?pct(x.sales,totalSales):0}));const top=rows.filter(x=>x.category_rank!=null&&x.category_rank<=100);const young=top.filter(x=>x.days_since_launch!=null&&x.days_since_launch<=180);
+    return{rows,groups:gs,totalSales,totalRevenue,parentCount:gs.length,price:med(rows.map(x=>x.price_gbp)),brands,cr3:brands.slice(0,3).reduce((s,x)=>s+x.share,0),youngShare:pct(young.length,top.length),topCount:top.length};
+  }
+  function deltaPct(cur,old){if(cur==null||old==null||!Number.isFinite(Number(cur))||!Number.isFinite(Number(old))||Number(old)===0)return null;return (Number(cur)-Number(old))*100/Number(old)}
+  function deltaPpt(cur,old){if(cur==null||old==null)return null;return Number(cur)-Number(old)}
+  function deltaHtml(v,suffix='%'){if(v==null||!Number.isFinite(v))return'<span class="delta-flat">历史不足</span>';const c=v>0?'delta-up':v<0?'delta-down':'delta-flat';return`<span class="${c}">${v>0?'↑ +':v<0?'↓ ':'→ '}${v.toFixed(1)}${suffix}</span>`}
+  function splitDim(x,dim){if(dim==='theme'&&typeof extractThemes==='function')return extractThemes(x);if(dim==='age'&&typeof extractAgeLabels==='function')return extractAgeLabels(x);return splitTags(x?.[dim])}
+  function dimShares(rows,dim){rows=eligibleRows(rows);const base=dim==='age'?rows.filter(x=>/birthday|bday|生日/i.test(`${x.title||''} ${x.occasion||''}`)):rows,m=new Map();for(const x of base)for(const t of splitDim(x,dim))m.set(t,(m.get(t)||0)+1);const out=new Map();for(const [k,n]of m)out.set(k,{count:n,share:pct(n,base.length)});return out}
+
+  let historyRuns=[],historyCache=new Map(),historyMode='30d',historyDim='theme';
+  async function rowsFor(runId){if(historyCache.has(runId))return historyCache.get(runId);const rows=await q(`product_snapshots?select=*&run_id=eq.${runId}&order=category_rank.asc.nullslast`);historyCache.set(runId,rows);return rows}
+  function runAtOrBefore(ts){const t=Number(ts);return historyRuns.find(r=>new Date(r.collected_at).getTime()<=t)||historyRuns[historyRuns.length-1]||null}
+  function runsBetween(start,end){return historyRuns.filter(r=>{const t=new Date(r.collected_at).getTime();return t>=start&&t<=end}).sort((a,b)=>new Date(a.collected_at)-new Date(b.collected_at))}
+  function representativeRuns(startRun,endRun,startTs,endTs){let a=runsBetween(startTs,endTs);if(startRun&&!a.some(r=>r.id===startRun.id))a.unshift(startRun);if(endRun&&!a.some(r=>r.id===endRun.id))a.push(endRun);a=[...new Map(a.map(r=>[r.id,r])).values()].sort((x,y)=>new Date(x.collected_at)-new Date(y.collected_at));if(a.length<=8)return a;const out=[];for(let i=0;i<8;i++){const idx=Math.round(i*(a.length-1)/7);out.push(a[idx])}return[...new Map(out.map(r=>[r.id,r])).values()]}
+  function periodRange(mode){
+    const latest=historyRuns[0];if(!latest)return null;const end=new Date(latest.collected_at),endTs=end.getTime();let start;
+    if(mode==='7d')start=new Date(endTs-7*86400000);
+    else if(mode==='30d')start=new Date(endTs-30*86400000);
+    else if(mode==='quarter')start=new Date(end.getFullYear(),Math.floor(end.getMonth()/3)*3,1);
+    else if(mode==='custom'){const a=document.getElementById('historyStartDate')?.value,b=document.getElementById('historyEndDate')?.value;if(!a||!b)return null;start=new Date(a+'T23:59:59');const ce=new Date(b+'T23:59:59');return{startTs:start.getTime(),endTs:ce.getTime(),label:`${a} 至 ${b}`}}
+    else return null;
+    return{startTs:start.getTime(),endTs,label:mode==='7d'?'近7天':mode==='30d'?'近30天':'本季度'};
+  }
+
   function ensureHistoryUI(){
-    const tabs=document.querySelector('.detail-tabs');
-    if(!tabs)return;
-    if(!document.getElementById('historyTabButton')){
-      const btn=document.createElement('button');
-      btn.id='historyTabButton';btn.type='button';btn.textContent='历史批次';
-      tabs.appendChild(btn);
-      btn.addEventListener('click',async()=>{
-        document.querySelectorAll('.detail-tabs button').forEach(x=>x.classList.remove('active'));
-        document.querySelectorAll('.detail-panel').forEach(x=>x.classList.remove('active'));
-        btn.classList.add('active');document.getElementById('detailHistory')?.classList.add('active');
-        await loadHistoryRuns(activeKey);
-      });
-    }
+    const tabs=document.querySelector('.detail-tabs');if(!tabs)return;
+    if(!document.getElementById('historyTabButton')){const btn=document.createElement('button');btn.id='historyTabButton';btn.type='button';btn.textContent='历史与趋势';tabs.appendChild(btn);btn.addEventListener('click',async()=>{document.querySelectorAll('.detail-tabs button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.detail-panel').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById('detailHistory')?.classList.add('active');await loadHistoryRuns(activeKey)})}
     if(!document.getElementById('detailHistory')){
-      const sec=document.createElement('section');
-      sec.id='detailHistory';sec.className='detail-panel';
-      sec.innerHTML=`<div class="page-head"><div><h2>历史采集批次</h2><p>每一轮采集都独立保存；这里按时间回看原始快照，不与最新市场全景混算。</p></div><div id="historyRunCount" class="page-count">—</div></div>
-        <div class="history-toolbar"><select id="historyRunSelect"><option>正在读取历史批次…</option></select><span id="historyRunNote" class="history-note"></span></div>
-        <div id="historyKpis" class="history-kpis"></div>
-        <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>当前排名</th><th>父体销量</th><th>销售额</th><th>变体数量</th><th>上架天数</th></tr></thead><tbody id="historyRows"><tr><td colspan="6" class="history-empty">选择一个批次查看。</td></tr></tbody></table></div>`;
-      document.querySelector('#detailPanel main')?.appendChild(sec);
-      const parent=document.getElementById('detailPanel');
-      if(parent) parent.appendChild(sec);
-      const sel=sec.querySelector('#historyRunSelect');
-      sel.addEventListener('change',()=>renderHistoryRun(Number(sel.value)));
+      const sec=document.createElement('section');sec.id='detailHistory';sec.className='detail-panel';sec.innerHTML=`
+        <div class="page-head"><div><h2>历史与趋势</h2><p>原始批次用于查证；7天、30天和季度用于回顾市场、品牌、结构与产品开发信号。</p></div><div id="historyRunCount" class="page-count">—</div></div>
+        <div class="history-period-nav" id="historyPeriodNav"><button data-mode="batch">原始批次</button><button data-mode="7d">近7天</button><button class="active" data-mode="30d">近30天</button><button data-mode="quarter">本季度</button><button data-mode="custom">自定义</button></div>
+        <div class="history-toolbar custom-range" id="historyCustomRange"><input type="date" id="historyStartDate"><span>至</span><input type="date" id="historyEndDate"><button id="historyApplyCustom" class="history-apply">应用</button></div>
+        <div id="historyTrendView" class="history-trend-view active">
+          <div class="trend-summary"><div class="mark">✦</div><div><div class="kicker">时间维度开发结论</div><div id="historyTrendSummary" class="text">正在读取历史趋势…</div></div></div>
+          <div id="historyModeNote" class="history-mode-note"></div>
+          <div id="historyTrendKpis" class="history-kpis"></div>
+          <div id="historyTrendCharts" class="trend-grid"></div>
+          <section class="history-section"><div class="history-section-head"><div><h3>品牌份额变化</h3><p>统一按父体销量去重口径，重点看谁正在获得或失去份额。</p></div></div><div id="historyBrandChanges" class="change-list"></div></section>
+          <section class="history-section"><div class="history-section-head"><div><h3>产品结构变化</h3><p>比较期初与当前样本结构份额；年龄仅在生日主题样本内计算。</p></div><div id="historyDimSwitch" class="history-dim-switch"><button data-hdim="product_type">产品类型</button><button data-hdim="theme" class="active">主题</button><button data-hdim="age">年龄</button><button data-hdim="colour_style">颜色</button><button data-hdim="pack_size">数量</button><button data-hdim="size_text">尺寸</button><button data-hdim="occasion">场景</button><button data-hdim="material">材质</button></div></div><div id="historyStructureChanges" class="change-list"></div></section>
+          <section class="history-section"><div class="history-section-head"><div><h3>时间段赢家产品</h3><p>不使用机会分，直接看新进Top100、连续前移、新品效率和当前父体销量。</p></div></div><div id="historyWinners" class="winner-list"></div></section>
+        </div>
+        <div id="historyBatchView" class="history-batch-view">
+          <div class="history-toolbar"><select id="historyRunSelect"><option>正在读取历史批次…</option></select><span id="historyRunNote" class="history-note"></span></div>
+          <div id="historyKpis" class="history-kpis"></div>
+          <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>当前排名</th><th>父体销量</th><th>销售额</th><th>变体数量</th><th>上架天数</th></tr></thead><tbody id="historyRows"><tr><td colspan="6" class="history-empty">选择一个批次查看。</td></tr></tbody></table></div>
+        </div>`;
+      document.getElementById('detailPanel')?.appendChild(sec);
+      sec.querySelector('#historyRunSelect').addEventListener('change',()=>renderHistoryRun(Number(sec.querySelector('#historyRunSelect').value)));
+      sec.querySelector('#historyPeriodNav').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(!b)return;setHistoryMode(b.dataset.mode)});
+      sec.querySelector('#historyDimSwitch').addEventListener('click',e=>{const b=e.target.closest('button[data-hdim]');if(!b)return;historyDim=b.dataset.hdim;sec.querySelectorAll('#historyDimSwitch button').forEach(x=>x.classList.toggle('active',x===b));renderTrendStructure()});
+      sec.querySelector('#historyApplyCustom').addEventListener('click',()=>renderTrendMode('custom'));
     }
   }
 
-  let historyRuns=[];
   async function loadHistoryRuns(key){
-    ensureHistoryUI();
-    const sel=document.getElementById('historyRunSelect');
-    const note=document.getElementById('historyRunNote');
-    if(!sel)return;
-    sel.innerHTML='<option>正在读取…</option>';note.textContent='';
-    try{
-      historyRuns=await q(`monitor_runs?select=id,collected_at,source,source_status,source_note,is_baseline,data_month&category_key=eq.${key}&order=collected_at.desc&limit=80`);
-      document.getElementById('historyRunCount').textContent=`保留 ${historyRuns.length} 个批次`;
-      sel.innerHTML=historyRuns.map((r,i)=>`<option value="${r.id}">${i===0?'最新 · ':''}${when(r.collected_at)} · Run ${r.id}${r.data_month?' · '+String(r.data_month).slice(0,7):''}</option>`).join('');
-      if(historyRuns.length)await renderHistoryRun(historyRuns[0].id);else document.getElementById('historyRows').innerHTML='<tr><td colspan="6" class="history-empty">暂无历史批次。</td></tr>';
-    }catch(e){sel.innerHTML='<option>历史批次读取失败</option>';note.textContent=e.message;}
+    ensureHistoryUI();historyCache=new Map();const note=document.getElementById('historyRunCount');
+    try{historyRuns=await q(`monitor_runs?select=id,collected_at,source,source_status,source_note,is_baseline,data_month&category_key=eq.${key}&source_status=eq.ok&order=collected_at.desc&limit=120`);note.textContent=`保留 ${historyRuns.length} 个批次`;const sel=document.getElementById('historyRunSelect');sel.innerHTML=historyRuns.map((r,i)=>`<option value="${r.id}">${i===0?'最新 · ':''}${when(r.collected_at)} · Run ${r.id}${r.data_month?' · '+String(r.data_month).slice(0,7):''}</option>`).join('');if(historyMode==='batch'&&historyRuns.length)await renderHistoryRun(historyRuns[0].id);else await renderTrendMode(historyMode)}catch(e){note.textContent='历史读取失败';document.getElementById('historyTrendSummary').textContent=e.message}
   }
+  function setHistoryMode(mode){historyMode=mode;document.querySelectorAll('#historyPeriodNav button').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));document.getElementById('historyBatchView').classList.toggle('active',mode==='batch');document.getElementById('historyTrendView').classList.toggle('active',mode!=='batch');document.getElementById('historyCustomRange').classList.toggle('active',mode==='custom');if(mode==='batch'){if(historyRuns.length)renderHistoryRun(Number(document.getElementById('historyRunSelect').value||historyRuns[0].id))}else if(mode!=='custom')renderTrendMode(mode);else initCustomDates()}
+  function initCustomDates(){if(!historyRuns.length)return;const end=new Date(historyRuns[0].collected_at),start=new Date(end.getTime()-30*86400000);const f=d=>d.toISOString().slice(0,10);const a=document.getElementById('historyStartDate'),b=document.getElementById('historyEndDate');if(!a.value)a.value=f(start);if(!b.value)b.value=f(end)}
 
   async function renderHistoryRun(runId){
-    const run=historyRuns.find(r=>Number(r.id)===Number(runId));
-    const body=document.getElementById('historyRows'),kpis=document.getElementById('historyKpis'),note=document.getElementById('historyRunNote');
-    if(!body||!kpis)return;
-    body.innerHTML='<tr><td colspan="6" class="history-empty">正在读取该轮商品…</td></tr>';
-    try{
-      const rows=await q(`product_snapshots?select=*&run_id=eq.${runId}&order=category_rank.asc.nullslast`);
-      const parentCoverage=pct(rows.filter(x=>x.parent_sales_estimate!=null).length,rows.length);
-      const revenueCoverage=pct(rows.filter(x=>x.sales_revenue_gbp!=null).length,rows.length);
-      const top=rows.filter(x=>x.category_rank!=null&&x.category_rank<=100).length;
-      kpis.innerHTML=`<div class="history-kpi"><span>该轮 ASIN</span><b>${fmt(rows.length)}</b><small>原始快照记录</small></div><div class="history-kpi"><span>排名≤100</span><b>${fmt(top)}</b><small>该轮采集结果</small></div><div class="history-kpi"><span>父体销量覆盖</span><b>${parentCoverage.toFixed(1)}%</b><small>卖家精灵字段</small></div><div class="history-kpi"><span>销售额覆盖</span><b>${revenueCoverage.toFixed(1)}%</b><small>该轮字段完整度</small></div>`;
-      note.textContent=run?`${when(run.collected_at)} · ${run.source_status||'—'}${run.source_note?' · '+run.source_note:''}`:'';
-      body.innerHTML=rows.length?rows.map(x=>`<tr><td>${productCell(x)}</td><td class="rank">${x.category_rank==null?'—':'#'+fmt(x.category_rank)}</td><td>${x.parent_sales_estimate==null?'—':fmt(x.parent_sales_estimate)}</td><td>${x.sales_revenue_gbp==null?'—':money(x.sales_revenue_gbp)}</td><td>${x.variant_count==null?'—':fmt(x.variant_count)}</td><td>${fmt(x.days_since_launch)}</td></tr>`).join(''):'<tr><td colspan="6" class="history-empty">该批次没有商品记录。</td></tr>';
-      bindImgs();
-    }catch(e){body.innerHTML=`<tr><td colspan="6" class="history-empty">读取失败：${esc(e.message)}</td></tr>`;}
+    const run=historyRuns.find(r=>Number(r.id)===Number(runId)),body=document.getElementById('historyRows'),kpis=document.getElementById('historyKpis'),note=document.getElementById('historyRunNote');if(!body||!kpis)return;body.innerHTML='<tr><td colspan="6" class="history-empty">正在读取该轮商品…</td></tr>';
+    try{const rows=await rowsFor(runId),parentCoverage=pct(rows.filter(x=>x.parent_sales_estimate!=null).length,rows.length),revenueCoverage=pct(rows.filter(x=>x.sales_revenue_gbp!=null).length,rows.length),top=rows.filter(x=>x.category_rank!=null&&x.category_rank<=100).length;kpis.innerHTML=`<div class="history-kpi"><span>该轮 ASIN</span><b>${fmt(rows.length)}</b><small>原始快照记录</small></div><div class="history-kpi"><span>排名≤100</span><b>${fmt(top)}</b><small>该轮采集结果</small></div><div class="history-kpi"><span>父体销量覆盖</span><b>${parentCoverage.toFixed(1)}%</b><small>卖家精灵字段</small></div><div class="history-kpi"><span>销售额覆盖</span><b>${revenueCoverage.toFixed(1)}%</b><small>该轮字段完整度</small></div>`;note.textContent=run?`${when(run.collected_at)} · ${run.source_status||'—'}${run.source_note?' · '+run.source_note:''}`:'';body.innerHTML=rows.length?rows.map(x=>`<tr><td>${productCell(x)}</td><td class="rank">${x.category_rank==null?'—':'#'+fmt(x.category_rank)}</td><td>${x.parent_sales_estimate==null?'—':fmt(x.parent_sales_estimate)}</td><td>${x.sales_revenue_gbp==null?'—':money(x.sales_revenue_gbp)}</td><td>${x.variant_count==null?'—':fmt(x.variant_count)}</td><td>${fmt(x.days_since_launch)}</td></tr>`).join(''):'<tr><td colspan="6" class="history-empty">该批次没有商品记录。</td></tr>';bindImgs()}catch(e){body.innerHTML=`<tr><td colspan="6" class="history-empty">读取失败：${esc(e.message)}</td></tr>`}
   }
 
+  let trendState=null;
+  async function renderTrendMode(mode){
+    if(!historyRuns.length)return;const range=periodRange(mode);if(!range)return;const endRun=runAtOrBefore(range.endTs)||historyRuns[0],startRun=runAtOrBefore(range.startTs)||historyRuns[historyRuns.length-1];if(!endRun||!startRun)return;
+    const rep=representativeRuns(startRun,endRun,new Date(startRun.collected_at).getTime(),new Date(endRun.collected_at).getTime());document.getElementById('historyTrendSummary').textContent='正在计算市场、品牌和结构变化…';
+    try{const packs=await Promise.all(rep.map(async r=>({run:r,rows:await rowsFor(r.id)}))),startRows=await rowsFor(startRun.id),endRows=await rowsFor(endRun.id);trendState={mode,label:range.label,startRun,endRun,startRows,endRows,start:snapshot(startRows),end:snapshot(endRows),points:packs.map(p=>({run:p.run,snap:snapshot(p.rows)}))};renderTrendAll()}catch(e){document.getElementById('historyTrendSummary').textContent='趋势读取失败：'+e.message}
+  }
+  function seriesCard(title,desc,points,get,format){const vals=points.map(p=>get(p.snap)).filter(v=>v!=null&&Number.isFinite(Number(v))).map(Number),max=Math.max(...vals,1),min=Math.min(...vals,0),span=Math.max(1,max-min);return`<article class="trend-card"><h3>${title}</h3><p>${desc}</p><div class="mini-series">${points.map(p=>{const v=get(p.snap),h=v==null?3:Math.max(5,Math.round(10+62*(Number(v)-min)/span));return`<div class="pt"><div class="bar-wrap"><div class="bar" style="height:${h}px"></div></div><span class="val">${format(v)}</span><span class="date">${dateOnly(p.run.collected_at)}</span></div>`}).join('')}</div></article>`}
+  function winnerRows(st){const sm=new Map(st.startRows.map(x=>[x.asin,x]));return st.endRows.map(x=>{const old=sm.get(x.asin),oldRank=old?.category_rank??null,delta=oldRank!=null&&x.category_rank!=null?oldRank-x.category_rank:null,newTop=x.category_rank<=100&&(oldRank==null||oldRank>100),young=x.days_since_launch!=null&&x.days_since_launch<=180;let signal=newTop?'新进 Top100':delta>=100?'排名大幅前移':delta>=20?'连续前移':young&&x.category_rank<=100?'新品进入头部':'当前强势';let order=(newTop?100000:0)+(delta??0)+(young?500:0)+(x.parent_sales_estimate??0)/20;return{x,oldRank,delta,signal,order}}).filter(o=>o.x.category_rank!=null&&(o.signal!=='当前强势'||o.x.category_rank<=100)).sort((a,b)=>b.order-a.order).slice(0,8)}
+  function devPeriodSummary(st){
+    const brandUnion=new Set([...st.start.brands.map(x=>norm(x.name)),...st.end.brands.map(x=>norm(x.name))]),bm0=new Map(st.start.brands.map(x=>[norm(x.name),x])),bm1=new Map(st.end.brands.map(x=>[norm(x.name),x]));let bg=null;for(const k of brandUnion){const a=bm0.get(k),b=bm1.get(k);if(!b)continue;const d=b.share-(a?.share||0);if(!bg||d>bg.delta)bg={name:b.name,delta:d,share:b.share}}
+    const dimBest=dim=>{const a=dimShares(st.startRows,dim),b=dimShares(st.endRows,dim);let best=null;for(const[k,v]of b){const d=v.share-(a.get(k)?.share||0);if(!best||d>best.delta)best={name:k,delta:d,share:v.share}}return best};const theme=dimBest('theme'),age=dimBest('age'),type=dimBest('product_type'),w=winnerRows(st)[0];const parts=[];
+    if(theme&&theme.delta>0.3)parts.push(`“${theme.name}”样本结构份额 +${theme.delta.toFixed(1)}pct`);if(age&&age.delta>0.3)parts.push(`${age.name}生日方向 +${age.delta.toFixed(1)}pct`);if(type&&type.delta>0.3)parts.push(`${type.name}产品形态 +${type.delta.toFixed(1)}pct`);if(bg&&bg.delta>0.3)parts.push(`${bg.name}品牌份额 +${bg.delta.toFixed(1)}pct`);
+    const lead=parts.length?parts.slice(0,3).join('，'):'市场结构暂未出现特别集中的单一增量方向';let prod='';if(w){const r=w.oldRank==null?`当前 #${fmt(w.x.category_rank)}`:`#${fmt(w.oldRank)} → #${fmt(w.x.category_rank)}`;prod=`重点核查 ${w.x.brand||'未知品牌'} 的 ${w.x.asin}（${r}，父体销量 ${w.x.parent_sales_estimate==null?'待补':fmt(w.x.parent_sales_estimate)}）。`}
+    const focus=age&&age.delta>0.3?`开发上优先验证 ${age.name}及相邻年龄段，但不要只换数字，应同步验证组件组合、安装效率和拍照呈现。`:theme&&theme.delta>0.3?`开发上围绕“${theme.name}”向相邻人群/场景扩展，并验证颜色、规格与产品形态差异，而不是仅做图案替换。`:'开发上先跟踪多轮同时上涨的产品结构，再决定是否进入，避免把单次排名跳升当成趋势。';return`${st.label}回顾：${lead}。${prod}${focus}`
+  }
+  function renderTrendAll(){const st=trendState;if(!st)return;const actualDays=Math.max(0,Math.round((new Date(st.endRun.collected_at)-new Date(st.startRun.collected_at))/86400000));document.getElementById('historyTrendSummary').textContent=devPeriodSummary(st);document.getElementById('historyModeNote').textContent=`${st.label} · 对比 ${when(st.startRun.collected_at)} → ${when(st.endRun.collected_at)} · 实际可用跨度 ${actualDays} 天${st.mode!=='7d'&&st.mode!=='custom'&&actualDays<20?' · 当前历史不足完整覆盖目标时间，已使用最早可用批次':''}`;
+    const cards=[['父体销量',compact(st.end.totalSales),deltaHtml(deltaPct(st.end.totalSales,st.start.totalSales)),'期初 '+compact(st.start.totalSales)],['父体销售额',gbpCompact(st.end.totalRevenue),deltaHtml(deltaPct(st.end.totalRevenue,st.start.totalRevenue)),'期初 '+gbpCompact(st.start.totalRevenue)],['有效父体数',fmt(st.end.parentCount),deltaHtml(deltaPct(st.end.parentCount,st.start.parentCount)),'期初 '+fmt(st.start.parentCount)],['价格中位数',st.end.price==null?'—':money(st.end.price),deltaHtml(deltaPct(st.end.price,st.start.price)),'期初 '+(st.start.price==null?'—':money(st.start.price))],['Top3品牌集中度',st.end.cr3.toFixed(1)+'%',deltaHtml(deltaPpt(st.end.cr3,st.start.cr3),'pct'),'期初 '+st.start.cr3.toFixed(1)+'%'],['Top100新品占比',st.end.youngShare.toFixed(1)+'%',deltaHtml(deltaPpt(st.end.youngShare,st.start.youngShare),'pct'),'≤180天新品 / Top100'],['Top100样本',fmt(st.end.topCount),deltaHtml(deltaPct(st.end.topCount,st.start.topCount)),'期初 '+fmt(st.start.topCount)],['TOP1品牌',st.end.brands[0]?.name||'—',st.end.brands[0]?`${st.end.brands[0].share.toFixed(1)}%`:'—','按父体销量份额']];document.getElementById('historyTrendKpis').innerHTML=cards.map(c=>`<div class="history-kpi"><span>${esc(c[0])}</span><b>${esc(c[1])}</b><small>${c[2]} · ${esc(c[3])}</small></div>`).join('');
+    document.getElementById('historyTrendCharts').innerHTML=seriesCard('父体销量走势','不是逐日累计，而是各批次近30天父体销量估算值。',st.points,s=>s.totalSales,compact)+seriesCard('父体销售额走势','各批次销售额估算，观察期初到当前方向。',st.points,s=>s.totalRevenue,gbpCompact)+seriesCard('Top100新品占比','≤180天新品在Top100样本中的占比。',st.points,s=>s.youngShare,v=>v==null?'—':v.toFixed(1)+'%')+seriesCard('TOP3品牌集中度','观察市场是否向头部品牌集中。',st.points,s=>s.cr3,v=>v==null?'—':v.toFixed(1)+'%');renderTrendBrands();renderTrendStructure();renderTrendWinners()}
+  function renderTrendBrands(){const st=trendState;if(!st)return;const a=new Map(st.start.brands.map(x=>[norm(x.name),x])),b=new Map(st.end.brands.map(x=>[norm(x.name),x])),keys=new Set([...a.keys(),...b.keys()]);const rows=[...keys].map(k=>{const x=a.get(k),y=b.get(k);return{name:y?.name||x?.name||k,start:x?.share||0,end:y?.share||0,delta:(y?.share||0)-(x?.share||0)}}).sort((x,y)=>Math.abs(y.delta)-Math.abs(x.delta)||y.end-x.end).slice(0,10);document.getElementById('historyBrandChanges').innerHTML=rows.length?rows.map(x=>`<div class="change-row"><span class="name brand-name">${esc(x.name)}</span><span class="num start-col">${x.start.toFixed(1)}%</span><span class="num">${x.end.toFixed(1)}%</span><span class="delta ${x.delta>=0?'up':'down'}">${x.delta>=0?'+':''}${x.delta.toFixed(1)}pct</span></div>`).join(''):'<div class="history-empty">品牌父体销量数据不足。</div>'}
+  function renderTrendStructure(){const st=trendState;if(!st)return;const a=dimShares(st.startRows,historyDim),b=dimShares(st.endRows,historyDim),keys=new Set([...a.keys(),...b.keys()]);const rows=[...keys].map(k=>({name:k,start:a.get(k)?.share||0,end:b.get(k)?.share||0,delta:(b.get(k)?.share||0)-(a.get(k)?.share||0)})).filter(x=>x.end>0||x.start>0).sort((x,y)=>Math.abs(y.delta)-Math.abs(x.delta)||y.end-x.end).slice(0,12);document.getElementById('historyStructureChanges').innerHTML=rows.length?rows.map(x=>`<div class="change-row"><span class="name">${esc(x.name)}</span><span class="num start-col">${x.start.toFixed(1)}%</span><span class="num">${x.end.toFixed(1)}%</span><span class="delta ${x.delta>=0?'up':'down'}">${x.delta>=0?'+':''}${x.delta.toFixed(1)}pct</span></div>`).join(''):'<div class="history-empty">当前维度暂无可比较标签。</div>'}
+  function renderTrendWinners(){const st=trendState;if(!st)return,rows=winnerRows(st);document.getElementById('historyWinners').innerHTML=rows.length?rows.map(o=>`<div class="winner-row"><div>${productCell(o.x)}</div><span class="winner-signal">${esc(o.signal)}</span><div class="winner-rank">${o.oldRank==null?'新出现':'#'+fmt(o.oldRank)} → #${fmt(o.x.category_rank)}<br>父体销量 ${o.x.parent_sales_estimate==null?'—':fmt(o.x.parent_sales_estimate)}</div></div>`).join(''):'<div class="history-empty">该时间段暂无明显赢家产品。</div>';bindImgs()}
+
   ensureHistoryUI();
-  document.querySelectorAll('.category-tabs button').forEach(b=>{
-    b.addEventListener('click',()=>setTimeout(()=>{
-      if(document.getElementById('historyTabButton')?.classList.contains('active') && b.dataset.category!=='compare')loadHistoryRuns(b.dataset.category);
-    },30));
-  });
+  document.querySelectorAll('.category-tabs button').forEach(b=>{b.addEventListener('click',()=>setTimeout(()=>{if(document.getElementById('historyTabButton')?.classList.contains('active')&&b.dataset.category!=='compare')loadHistoryRuns(b.dataset.category)},30))});
   setTimeout(()=>{try{if(STORE?.party_balloons||STORE?.party_packs){renderMarketTop();if(document.getElementById('detailPanel')?.classList.contains('active'))renderDetail(activeKey)}}catch(e){}},250);
 })();
