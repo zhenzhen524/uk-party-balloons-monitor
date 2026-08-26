@@ -6,7 +6,7 @@
     'parent-sales-display.js?v=20260826-parent-sales4',
     'market-panorama.js?v=20260826-panorama3',
     'history-brand-ui.js?v=20260826-history-brand3',
-    'history-force.js?v=20260826-history-force1'
+    'history-force.js?v=20260826-history-force2'
   ];
   function load(i){
     if(i>=files.length)return;
