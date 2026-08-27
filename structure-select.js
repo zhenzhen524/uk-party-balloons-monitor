@@ -1,6 +1,7 @@
 /* Stable sequential loader for dashboard enhancement modules. */
 (function(){
   const files=[
+    'valid-run-filter.js?v=20260827-valid1',
     'structure-select-base.js?v=20260826-history3',
     'threshold-rule.js?v=20260826-history3',
     'parent-sales-display.js?v=20260826-parent-sales4',
