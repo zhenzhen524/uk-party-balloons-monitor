@@ -9,7 +9,8 @@
     'history-brand-ui.js?v=20260826-history-brand3',
     'history-force.js?v=20260826-history-force2',
     'dual-market-panorama-v2.js?v=20260827-market2',
-    'market-copy-cleanup.js?v=20260827-copy1'
+    'market-copy-cleanup.js?v=20260827-copy1',
+    'detail-workbench-cleanup.js?v=20260827-workbench1'
   ];
   function load(i){
     if(i>=files.length)return;
