@@ -38,12 +38,12 @@ jobs:
           s = s.replace('</head>', '<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><style id="privateBootStyle">body.private-locked .app-shell{visibility:hidden}</style></head>')
           s = s.replace('<body>', '<body class="private-locked">', 1)
           old = '<script src="app.js?v=20260823-dual-v1"></script>\n<script src="structure-select.js?v=20260826-history3"></script>'
-          new = '<script src="private-access.js?v=20260828-private3"></script>'
+          new = '<script src="private-access.js?v=20260828-private-proxy1"></script>'
           if old not in s:
               raise SystemExit('Expected dashboard script entry was not found in index.html')
           s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
-          redirect = '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=./?v=20260828-private3"><title>正在进入私有看板</title></head><body><script>location.replace('./?v=20260828-private3')</script></body></html>'''
+          redirect = '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=./?v=20260828-private-proxy1"><title>正在进入私有看板</title></head><body><script>location.replace('./?v=20260828-private-proxy1')</script></body></html>'''
           Path('_site/404.html').write_text(redirect, encoding='utf-8')
           PY
       - name: Upload artifact
