@@ -5,7 +5,6 @@
   const SB='https://wsuwnmrbdcorercrtcgy.supabase.co';
   const KEY='sb_publishable_4uTDBH31bP62rvnB59ee1A_iQvnqLEC';
   const PROXY=SB+'/functions/v1/private-dashboard-data';
-  const SESSION_KEY='uk-party-dashboard-access';
   const style=document.createElement('style');
   style.textContent=`
     body.private-locked{overflow:hidden;background:#f4f6fa}
@@ -32,7 +31,7 @@
       <div class="private-field"><input id="privatePassword" type="password" autocomplete="current-password" placeholder="输入访问口令" aria-label="访问口令"><button id="privateSubmit" type="submit">进入看板</button></div>
       <div id="privateMsg" class="private-msg"></div>
     </form>
-    <p class="private-foot">未通过验证时，看板核心与市场数据均不会加载。</p>
+    <p class="private-foot">未通过验证时，看板核心与市场数据均不会加载；重新打开或刷新页面需要再次验证。</p>
   </div>`;
   document.body.appendChild(gate);
 
@@ -53,7 +52,7 @@
     if(r.status===401)return false;
     if(!r.ok)throw new Error('私有数据服务暂时不可用（HTTP '+r.status+'）');
     const rows=await r.json();
-    return Array.isArray(rows)&&rows.length>=0;
+    return Array.isArray(rows);
   }
 
   function installPrivateFetch(password){
@@ -80,7 +79,6 @@
 
   async function openDashboard(password){
     installPrivateFetch(password);
-    sessionStorage.setItem(SESSION_KEY,password);
     window.__dashboardAuthVerified=true;
     setMsg('验证通过，正在加载市场数据…');
     try{
@@ -91,21 +89,20 @@
       document.body.classList.remove('private-locked');
       const boot=document.getElementById('privateBootStyle');if(boot)boot.remove();
       setTimeout(()=>{if(typeof window.load==='function')window.load()},350);
-      const badge=document.createElement('div');badge.className='private-badge';badge.innerHTML='<span>● 私有访问已验证</span><button type="button">退出</button>';badge.querySelector('button').onclick=()=>{sessionStorage.removeItem(SESSION_KEY);location.reload()};document.body.appendChild(badge);
+      const badge=document.createElement('div');badge.className='private-badge';badge.innerHTML='<span>● 私有访问已验证</span><button type="button">退出</button>';badge.querySelector('button').onclick=()=>location.reload();document.body.appendChild(badge);
     }catch(e){console.error(e);setMsg(e.message||'看板核心加载失败，请刷新重试。',true);}
   }
 
-  async function attempt(password,quiet=false){
+  async function attempt(password){
     if(!password)return false;
-    submit.disabled=true;if(!quiet)setMsg('正在验证并测试数据通道…');
+    submit.disabled=true;setMsg('正在验证并测试数据通道…');
     try{
       if(await verify(password)){await openDashboard(password);return true;}
-      sessionStorage.removeItem(SESSION_KEY);setMsg('访问口令不正确，请重新输入。',true);input.focus();return false;
+      setMsg('访问口令不正确，请重新输入。',true);input.focus();return false;
     }catch(e){setMsg(e.message||'验证失败，请稍后重试。',true);return false}
     finally{submit.disabled=false}
   }
 
   form.addEventListener('submit',e=>{e.preventDefault();attempt(input.value.trim())});
-  const saved=sessionStorage.getItem(SESSION_KEY);
-  if(saved){setMsg('正在恢复私有访问并测试数据通道…');attempt(saved,true)}else setTimeout(()=>input.focus(),60);
+  setTimeout(()=>input.focus(),60);
 })();
