@@ -1,5 +1,7 @@
-/* Stable sequential loader for dashboard enhancement modules. */
+/* Dashboard enhancement loader. Wait until private access and core app are ready. */
 (function(){
+  if(window.__structureLoaderInstalled)return;
+  window.__structureLoaderInstalled=true;
   const files=[
     'valid-run-filter.js?v=20260827-valid1',
     'structure-select-base.js?v=20260826-history3',
@@ -21,5 +23,12 @@
     s.onerror=()=>{console.error('模块加载失败:',files[i]);load(i+1)};
     document.body.appendChild(s);
   }
-  load(0);
+  function startWhenReady(){
+    if(window.__dashboardAuthorized && typeof window.loadCategory==='function'){
+      load(0);
+      return;
+    }
+    setTimeout(startWhenReady,120);
+  }
+  startWhenReady();
 })();
