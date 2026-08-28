@@ -1,5 +1,7 @@
 /* Private dashboard access gate. Data is served through a password-verified Supabase Edge Function. */
 (function(){
+  if(window.__privateAccessGateInstalled)return;
+  window.__privateAccessGateInstalled=true;
   const SB='https://wsuwnmrbdcorercrtcgy.supabase.co';
   const KEY='sb_publishable_4uTDBH31bP62rvnB59ee1A_iQvnqLEC';
   const PROXY=SB+'/functions/v1/private-dashboard-data';
@@ -17,6 +19,7 @@
     .private-badge{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;align-items:center;gap:8px;background:#172033;color:#fff;border-radius:999px;padding:8px 11px;font:700 10px/1.2 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 6px 24px rgba(23,32,51,.15)}.private-badge button{border:0;background:transparent;color:#b8c3d9;font:inherit;cursor:pointer;padding:0}.private-badge button:hover{color:#fff}
   `;
   document.head.appendChild(style);
+  document.body.classList.add('private-locked');
 
   const gate=document.createElement('div');
   gate.className='private-gate';
@@ -29,7 +32,7 @@
       <div class="private-field"><input id="privatePassword" type="password" autocomplete="current-password" placeholder="输入访问口令" aria-label="访问口令"><button id="privateSubmit" type="submit">进入看板</button></div>
       <div id="privateMsg" class="private-msg"></div>
     </form>
-    <p class="private-foot">未通过验证时，浏览器不会直接读取 monitor_runs、product_snapshots 或 structure_snapshots。</p>
+    <p class="private-foot">未通过验证时，看板核心与市场数据均不会加载。</p>
   </div>`;
   document.body.appendChild(gate);
 
@@ -40,12 +43,7 @@
   async function proxyRequest(path,password){
     return nativeFetch(PROXY,{
       method:'POST',
-      headers:{
-        apikey:KEY,
-        Authorization:'Bearer '+KEY,
-        'Content-Type':'application/json',
-        'x-dashboard-password':password
-      },
+      headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','x-dashboard-password':password},
       body:JSON.stringify({path})
     });
   }
@@ -55,7 +53,7 @@
     if(r.status===401)return false;
     if(!r.ok)throw new Error('私有数据服务暂时不可用（HTTP '+r.status+'）');
     const rows=await r.json();
-    return Array.isArray(rows);
+    return Array.isArray(rows)&&rows.length>=0;
   }
 
   function installPrivateFetch(password){
@@ -73,21 +71,28 @@
   }
 
   function loadScript(src){
-    return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('模块加载失败：'+src));document.body.appendChild(s)});
+    return new Promise((resolve,reject)=>{
+      const existing=[...document.scripts].find(s=>s.src&&s.src.includes(src.split('?')[0]));
+      if(existing&&existing.dataset.loaded==='1'){resolve();return;}
+      const s=document.createElement('script');s.src=src;s.onload=()=>{s.dataset.loaded='1';resolve()};s.onerror=()=>reject(new Error('模块加载失败：'+src));document.body.appendChild(s);
+    });
   }
 
   async function openDashboard(password){
     installPrivateFetch(password);
     sessionStorage.setItem(SESSION_KEY,password);
-    gate.remove();
-    document.body.classList.remove('private-locked');
-    const boot=document.getElementById('privateBootStyle');if(boot)boot.remove();
+    window.__dashboardAuthVerified=true;
+    setMsg('验证通过，正在加载市场数据…');
     try{
-      await loadScript('app.js?v=20260828-private-proxy1');
-      await loadScript('structure-select.js?v=20260828-private-proxy1');
-      setTimeout(()=>{if(typeof load==='function')load()},500);
+      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260828-source-lock1');
+      window.__dashboardAuthorized=true;
+      if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260828-source-lock1');
+      gate.remove();
+      document.body.classList.remove('private-locked');
+      const boot=document.getElementById('privateBootStyle');if(boot)boot.remove();
+      setTimeout(()=>{if(typeof window.load==='function')window.load()},350);
       const badge=document.createElement('div');badge.className='private-badge';badge.innerHTML='<span>● 私有访问已验证</span><button type="button">退出</button>';badge.querySelector('button').onclick=()=>{sessionStorage.removeItem(SESSION_KEY);location.reload()};document.body.appendChild(badge);
-    }catch(e){console.error(e);alert('看板模块加载失败，请刷新重试。');}
+    }catch(e){console.error(e);setMsg(e.message||'看板核心加载失败，请刷新重试。',true);}
   }
 
   async function attempt(password,quiet=false){
