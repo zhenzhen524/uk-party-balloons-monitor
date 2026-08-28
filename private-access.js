@@ -1,7 +1,8 @@
-/* Private dashboard access gate. Password is verified in Supabase; no plaintext secret is stored in GitHub. */
+/* Private dashboard access gate. Data is served through a password-verified Supabase Edge Function. */
 (function(){
   const SB='https://wsuwnmrbdcorercrtcgy.supabase.co';
   const KEY='sb_publishable_4uTDBH31bP62rvnB59ee1A_iQvnqLEC';
+  const PROXY=SB+'/functions/v1/private-dashboard-data';
   const SESSION_KEY='uk-party-dashboard-access';
   const style=document.createElement('style');
   style.textContent=`
@@ -23,42 +24,49 @@
     <div class="private-icon">🔒</div>
     <div class="private-eyebrow">PRIVATE MARKET INTELLIGENCE</div>
     <h1>英国站派对类目监控中心</h1>
-    <p>该看板已设为受保护访问。请输入访问口令后加载 Party Balloons × Party Packs 市场数据。</p>
+    <p>请输入访问口令。验证成功后，市场数据将通过 Supabase 私有服务端通道加载。</p>
     <form id="privateAccessForm">
       <div class="private-field"><input id="privatePassword" type="password" autocomplete="current-password" placeholder="输入访问口令" aria-label="访问口令"><button id="privateSubmit" type="submit">进入看板</button></div>
       <div id="privateMsg" class="private-msg"></div>
     </form>
-    <p class="private-foot">验证在 Supabase 后端完成；未通过验证时市场数据不会返回到浏览器。本次浏览器会话验证成功后无需重复输入。</p>
+    <p class="private-foot">未通过验证时，浏览器不会直接读取 monitor_runs、product_snapshots 或 structure_snapshots。</p>
   </div>`;
   document.body.appendChild(gate);
 
   const form=document.getElementById('privateAccessForm'),input=document.getElementById('privatePassword'),submit=document.getElementById('privateSubmit'),msg=document.getElementById('privateMsg');
   const setMsg=(t,error=false)=>{msg.textContent=t||'';msg.className='private-msg'+(error?' error':'')};
+  const nativeFetch=window.fetch.bind(window);
+
+  async function proxyRequest(path,password){
+    return nativeFetch(PROXY,{
+      method:'POST',
+      headers:{
+        apikey:KEY,
+        Authorization:'Bearer '+KEY,
+        'Content-Type':'application/json',
+        'x-dashboard-password':password
+      },
+      body:JSON.stringify({path})
+    });
+  }
 
   async function verify(password){
-    const r=await fetch(SB+'/rest/v1/rpc/dashboard_access_ok',{
-      method:'POST',
-      headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','x-dashboard-password':password},
-      body:'{}'
-    });
-    if(!r.ok)throw new Error('验证服务暂时不可用');
-    const v=await r.json();
-    return v===true;
+    const r=await proxyRequest('monitor_runs?select=id&source_status=eq.ok&limit=1',password);
+    if(r.status===401)return false;
+    if(!r.ok)throw new Error('私有数据服务暂时不可用（HTTP '+r.status+'）');
+    const rows=await r.json();
+    return Array.isArray(rows);
   }
 
   function installPrivateFetch(password){
-    if(window.__privateFetchInstalled){window.__dashboardPassword=password;return;}
-    window.__privateFetchInstalled=true;
     window.__dashboardPassword=password;
-    const nativeFetch=window.fetch.bind(window);
+    if(window.__privateFetchInstalled)return;
+    window.__privateFetchInstalled=true;
     window.fetch=function(resource,options={}){
-      let url=typeof resource==='string'?resource:(resource&&resource.url)||'';
+      const url=typeof resource==='string'?resource:(resource&&resource.url)||'';
       if(url.startsWith(SB+'/rest/v1/')){
-        const sourceHeaders=options.headers||(resource instanceof Request?resource.headers:undefined);
-        const headers=new Headers(sourceHeaders||{});
-        headers.set('x-dashboard-password',window.__dashboardPassword||'');
-        options={...options,headers};
-        if(resource instanceof Request) resource=new Request(resource,options);
+        const path=url.slice((SB+'/rest/v1/').length);
+        return proxyRequest(path,window.__dashboardPassword||'');
       }
       return nativeFetch(resource,options);
     };
@@ -75,15 +83,16 @@
     document.body.classList.remove('private-locked');
     const boot=document.getElementById('privateBootStyle');if(boot)boot.remove();
     try{
-      await loadScript('app.js?v=20260823-dual-v1');
-      await loadScript('structure-select.js?v=20260827-private1');
+      await loadScript('app.js?v=20260828-private-proxy1');
+      await loadScript('structure-select.js?v=20260828-private-proxy1');
+      setTimeout(()=>{if(typeof load==='function')load()},500);
       const badge=document.createElement('div');badge.className='private-badge';badge.innerHTML='<span>● 私有访问已验证</span><button type="button">退出</button>';badge.querySelector('button').onclick=()=>{sessionStorage.removeItem(SESSION_KEY);location.reload()};document.body.appendChild(badge);
     }catch(e){console.error(e);alert('看板模块加载失败，请刷新重试。');}
   }
 
   async function attempt(password,quiet=false){
     if(!password)return false;
-    submit.disabled=true;if(!quiet)setMsg('正在验证…');
+    submit.disabled=true;if(!quiet)setMsg('正在验证并测试数据通道…');
     try{
       if(await verify(password)){await openDashboard(password);return true;}
       sessionStorage.removeItem(SESSION_KEY);setMsg('访问口令不正确，请重新输入。',true);input.focus();return false;
@@ -93,5 +102,5 @@
 
   form.addEventListener('submit',e=>{e.preventDefault();attempt(input.value.trim())});
   const saved=sessionStorage.getItem(SESSION_KEY);
-  if(saved){setMsg('正在恢复私有访问…');attempt(saved,true)}else setTimeout(()=>input.focus(),60);
+  if(saved){setMsg('正在恢复私有访问并测试数据通道…');attempt(saved,true)}else setTimeout(()=>input.focus(),60);
 })();
