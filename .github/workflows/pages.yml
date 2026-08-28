@@ -38,11 +38,12 @@ jobs:
           s = s.replace('</head>', '<style id="privateBootStyle">body.private-locked .app-shell{visibility:hidden}</style></head>')
           s = s.replace('<body>', '<body class="private-locked">', 1)
           old = '<script src="app.js?v=20260823-dual-v1"></script>\n<script src="structure-select.js?v=20260826-history3"></script>'
-          new = '<script src="private-access.js?v=20260828-private1"></script>'
+          new = '<script src="private-access.js?v=20260828-private2"></script>'
           if old not in s:
               raise SystemExit('Expected dashboard script entry was not found in index.html')
           s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
+          Path('_site/private-dashboard.html').write_text(s, encoding='utf-8')
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
