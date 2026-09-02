@@ -82,7 +82,7 @@
     window.__dashboardAuthVerified=true;
     setMsg('验证通过，正在加载市场数据…');
     try{
-      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260902-scenes-cn1');
+      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260902-twice-daily1');
       window.__dashboardAuthorized=true;
       if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260828-source-lock1');
       gate.remove();
