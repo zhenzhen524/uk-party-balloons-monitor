@@ -11,7 +11,7 @@
   }
   if(window.__privateAccessGateInstalled)return;
   const s=document.createElement('script');
-  s.src='private-access.js?v=20260902-scenes-cn1';
+  s.src='private-access.js?v=20260902-twice-daily1';
   s.onerror=()=>{
     document.body.classList.remove('private-locked');
     document.body.innerHTML='<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;padding:40px;color:#172033"><h2>私有访问模块加载失败</h2><p>请稍后刷新页面重试。</p></div>';
