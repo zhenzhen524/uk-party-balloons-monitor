@@ -6,7 +6,7 @@
     'valid-run-filter.js?v=20260827-valid1',
     'structure-select-base.js?v=20260826-history3',
     'threshold-rule.js?v=20260826-history3',
-    'parent-sales-display.js?v=20260826-parent-sales4',
+    'parent-sales-display.js?v=20260908-shared-decision1',
     'market-panorama.js?v=20260826-panorama3',
     'history-brand-ui.js?v=20260902-column-headings1',
     'history-force.js?v=20260826-history-force2',
