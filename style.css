@@ -17,3 +17,4 @@ footer{margin-top:18px;color:#98a2b3;font-size:11px;line-height:1.6}
 .high-price-note{margin:12px 0 2px;padding:11px 13px;border:1px solid #cbd8f3;border-radius:11px;background:#f7f9ff;color:#475467;font-size:11px;line-height:1.65}.high-price-note strong{color:#172033}.badge.good{background:#ecfdf3;color:#067647}.badge.info{background:#eef4ff;color:#245dd8}
 .development-select{min-width:86px;border:1px solid #cfd7e6;border-radius:8px;background:#fff;color:#172033;padding:7px 26px 7px 9px;font:inherit;font-weight:700;cursor:pointer}.development-select:focus{outline:2px solid #a9c2ff;outline-offset:1px}.development-select.saving{opacity:.55}.development-select.saved{border-color:#12b76a;background:#ecfdf3}
 .product-table .development-col{background:#f3f7ff;color:#174ea6;white-space:nowrap}
+#detailTopRows td:nth-child(2){display:table-cell!important}
