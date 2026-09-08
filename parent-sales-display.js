@@ -24,9 +24,9 @@ directOpportunityOrder=function(d,a,b){
 
 rewriteTableHeaders=function(){
   const market=document.querySelector('#marketTopRows')?.closest('table')?.querySelector('thead tr');
-  if(market)market.innerHTML='<th>类目</th><th>商品</th><th>当前排名</th><th>本轮变化</th><th>上架天数</th><th>变体数量</th><th>评论</th><th>父体销量</th><th>值得看原因</th>';
+  if(market)market.innerHTML='<th>类目</th><th class="development-col">是否开发</th><th>商品</th><th>当前排名</th><th>本轮变化</th><th>上架天数</th><th>评论</th><th>父体销量</th><th>值得看原因</th>';
   const top=document.querySelector('#detailTopRows')?.closest('table')?.querySelector('thead tr');
-  if(top)top.innerHTML='<th>商品</th><th>机会类型</th><th>当前排名</th><th>本轮变化</th><th>近三轮排名</th><th>上架天数</th><th>变体数量</th><th>评论</th><th>父体销量</th><th>原因</th>';
+  if(top)top.innerHTML='<th class="development-col">是否开发</th><th>商品</th><th>机会类型</th><th>当前排名</th><th>本轮变化</th><th>近三轮排名</th><th>上架天数</th><th>评论</th><th>父体销量</th><th>原因</th>';
   const changes=document.querySelector('#detailChangeRows')?.closest('table')?.querySelector('thead tr');
   if(changes)changes.innerHTML='<th>商品</th><th>优先级</th><th>当前排名</th><th>上次排名</th><th>变化</th><th>近三轮排名</th><th>价格</th><th>父体销量</th><th>变体数量</th><th>评分/评论</th><th>标签</th>';
   const mid=document.querySelector('#detailMidRows')?.closest('table')?.querySelector('thead tr');
@@ -46,18 +46,18 @@ renderMarketTop=function(){
     if((a.x.category_rank??999999)!==(b.x.category_rank??999999))return (a.x.category_rank??999999)-(b.x.category_rank??999999);
     return (b.x.parent_sales_estimate??-1)-(a.x.parent_sales_estimate??-1);
   });
-  rows=rows.slice(0,10);
+  rows=rows.slice(0,50);
   $('marketTopNote').textContent=STORE.party_packs?'双类目按P级与排名动能排序':'当前仅 Party Balloons';
-  $('marketTopRows').innerHTML=rows.length?rows.map(o=>`<tr><td>${categoryTag(o.d.key)}</td><td>${productCell(o.x)}</td><td class="rank">#${fmt(o.x.category_rank)}</td><td>${moveCell(o.d,o.x)}</td><td>${fmt(o.x.days_since_launch)}</td><td>${variantCell(o.x)}</td><td>${fmt(o.x.review_count)}</td><td>${parentSalesCell(o.x)}</td><td>${esc(opportunityReason(o.d,o.x))}</td></tr>`).join(''):'<tr><td colspan="9" class="empty">暂无数据。</td></tr>';
-  bindImgs();rewriteTableHeaders();
+  $('marketTopRows').innerHTML=rows.length?rows.map(o=>`<tr><td>${categoryTag(o.d.key)}</td><td class="development-col">${decisionCell(o.d.key,o.x)}</td><td>${productCell(o.x)}</td><td class="rank">#${fmt(o.x.category_rank)}</td><td>${moveCell(o.d,o.x)}</td><td>${fmt(o.x.days_since_launch)}</td><td>${fmt(o.x.review_count)}</td><td>${parentSalesCell(o.x)}</td><td>${esc(opportunityReason(o.d,o.x))}</td></tr>`).join(''):'<tr><td colspan="9" class="empty">暂无数据。</td></tr>';
+  bindImgs();bindDevelopmentSelectors();rewriteTableHeaders();
 };
 
 renderDetailTop=function(d){
   sanitizeData(d);ensureEnhancementUI();refreshTypeOptions(d);
-  const rows=[...d.products].sort((a,b)=>directOpportunityOrder(d,a,b)).slice(0,10);
+  const rows=[...d.products].sort((a,b)=>directOpportunityOrder(d,a,b)).slice(0,50);
   $('detailTopNote').textContent=`从 ${d.products.length} 个有效ASIN筛选${d.excludedOldLowValue?` · 已排除 ${d.excludedOldLowValue} 个低价值老链接`:''}`;
-  $('detailTopRows').innerHTML=rows.length?rows.map(x=>`<tr><td>${productCell(x)}</td><td>${opportunityType(d,x)}</td><td class="rank">#${fmt(x.category_rank)}</td><td>${moveCell(d,x)}</td><td>${rankHistory(d,x)}</td><td>${fmt(x.days_since_launch)}</td><td>${variantCell(x)}</td><td>${fmt(x.review_count)}</td><td>${parentSalesCell(x)}</td><td>${esc(opportunityReason(d,x))}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">暂无符合条件的商品。</td></tr>';
-  bindImgs();rewriteTableHeaders();
+  $('detailTopRows').innerHTML=rows.length?rows.map(x=>`<tr><td class="development-col">${decisionCell(d.key,x)}</td><td>${productCell(x)}</td><td>${opportunityType(d,x)}</td><td class="rank">#${fmt(x.category_rank)}</td><td>${moveCell(d,x)}</td><td>${rankHistory(d,x)}</td><td>${fmt(x.days_since_launch)}</td><td>${fmt(x.review_count)}</td><td>${parentSalesCell(x)}</td><td>${esc(opportunityReason(d,x))}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">暂无符合条件的商品。</td></tr>';
+  bindImgs();bindDevelopmentSelectors();rewriteTableHeaders();
 };
 
 renderDetailChanges=function(d){
