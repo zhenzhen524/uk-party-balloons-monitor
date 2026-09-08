@@ -8,11 +8,11 @@
         const p=h.parentElement?.querySelector('p');if(p)p.textContent='统一看市场规模、父体销量与销售额、品牌份额、新品进入及头部集中度。';
       }
       if(t==='英国 Party Market 今日机会 Top 10'){
-        h.textContent='英国 Party Market 今日开发关注 Top 10';
+        h.textContent='英国 Party Market 今日开发关注 Top 50';
         const p=h.parentElement?.querySelector('p');if(p)p.textContent='跨类目筛选今天最值得进一步拆解的商品；不再使用机会分作为展示指标。';
       }
       if(t==='今日机会 Top 10'){
-        h.textContent='今日开发关注 Top 10';
+        h.textContent='今日开发关注 Top 50';
         const p=h.parentElement?.querySelector('p');if(p)p.textContent='按排名动能、新品状态与产品结构信号筛选值得进一步拆解的商品。';
       }
     });
