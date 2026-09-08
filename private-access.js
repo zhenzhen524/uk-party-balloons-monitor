@@ -47,6 +47,16 @@
     });
   }
 
+  async function privateAction(action,payload={}){
+    const r=await nativeFetch(PROXY,{
+      method:'POST',
+      headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','x-dashboard-password':window.__dashboardPassword||''},
+      body:JSON.stringify({action,...payload})
+    });
+    if(!r.ok)throw new Error('保存失败（HTTP '+r.status+'）');
+    return r.json();
+  }
+
   async function verify(password){
     const r=await proxyRequest('monitor_runs?select=id&source_status=eq.ok&limit=1',password);
     if(r.status===401)return false;
@@ -57,6 +67,7 @@
 
   function installPrivateFetch(password){
     window.__dashboardPassword=password;
+    window.__dashboardPrivateAction=privateAction;
     if(window.__privateFetchInstalled)return;
     window.__privateFetchInstalled=true;
     window.fetch=function(resource,options={}){
@@ -82,7 +93,7 @@
     window.__dashboardAuthVerified=true;
     setMsg('验证通过，正在加载市场数据…');
     try{
-      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260908-high-price1');
+      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260908-top50');
       window.__dashboardAuthorized=true;
       if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260902-column-headings1');
       gate.remove();
