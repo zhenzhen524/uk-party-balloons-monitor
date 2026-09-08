@@ -27,8 +27,8 @@
       if(table)table.classList.remove('hide-score-col-2');
       const h=topBlock.querySelector('.section-head h2');
       const p=topBlock.querySelector('.section-head p');
-      if(h)h.textContent='今日开发关注 Top 50';
-      if(p)p.textContent='优先展示排名突破、新品进入与结构信号明显的商品，作为开发拆解对象。';
+      if(h)h.textContent='单类目开发观察 Top 50';
+      if(p)p.textContent='优先展示排名突破、新品进入与结构信号明显的商品；开发决策统一在“双类目总览”操作，此处只读显示共享状态。';
     }
   }
 
