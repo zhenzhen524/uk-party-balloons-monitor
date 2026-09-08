@@ -23,9 +23,11 @@
     const blocks=[...document.querySelectorAll('#detailOverview .section-block')];
     const topBlock=blocks.find(sec=>sec.querySelector('#detailTopRows'));
     if(topBlock){
+      const table=topBlock.querySelector('table');
+      if(table)table.classList.remove('hide-score-col-2');
       const h=topBlock.querySelector('.section-head h2');
       const p=topBlock.querySelector('.section-head p');
-      if(h)h.textContent='今日开发关注 Top 10';
+      if(h)h.textContent='今日开发关注 Top 50';
       if(p)p.textContent='优先展示排名突破、新品进入与结构信号明显的商品，作为开发拆解对象。';
     }
   }
