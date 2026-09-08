@@ -93,9 +93,9 @@
     window.__dashboardAuthVerified=true;
     setMsg('验证通过，正在加载市场数据…');
     try{
-      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260908-top50fix1');
+      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260908-top50-final1');
       window.__dashboardAuthorized=true;
-      if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260908-detail-product-visible1');
+      if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260908-top50-final1');
       gate.remove();
       document.body.classList.remove('private-locked');
       const boot=document.getElementById('privateBootStyle');if(boot)boot.remove();
