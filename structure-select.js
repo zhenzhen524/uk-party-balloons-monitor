@@ -11,8 +11,8 @@
     'history-brand-ui.js?v=20260902-column-headings1',
     'history-force.js?v=20260826-history-force2',
     'dual-market-panorama-v2.js?v=20260908-detail-product-visible1',
-    'market-copy-cleanup.js?v=20260827-copy1',
-    'detail-workbench-cleanup.js?v=20260827-workbench1'
+    'market-copy-cleanup.js?v=20260908-top50-final1',
+    'detail-workbench-cleanup.js?v=20260908-top50-final1'
   ];
   function load(i){
     if(i>=files.length)return;
