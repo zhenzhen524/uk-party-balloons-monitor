@@ -95,7 +95,7 @@
     try{
       if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260908-top50fix1');
       window.__dashboardAuthorized=true;
-      if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260902-column-headings1');
+      if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260908-shared-decision1');
       gate.remove();
       document.body.classList.remove('private-locked');
       const boot=document.getElementById('privateBootStyle');if(boot)boot.remove();
