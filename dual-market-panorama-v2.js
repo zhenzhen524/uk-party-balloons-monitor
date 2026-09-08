@@ -51,7 +51,7 @@
   function cleanLegacyScores(){
     document.querySelectorAll('.section-block').forEach(sec=>{const h=sec.querySelector('.section-head h2');if(h&&h.textContent.trim()==='今日类目机会指数')sec.style.display='none'});
     const market=document.querySelector('#marketTopRows')?.closest('table');if(market)market.classList.remove('hide-score-col-3');
-    const detail=document.querySelector('#detailTopRows')?.closest('table');if(detail)detail.classList.add('hide-score-col-2');
+    const detail=document.querySelector('#detailTopRows')?.closest('table');if(detail)detail.classList.remove('hide-score-col-2');
     const mid=document.querySelector('#detailMidRows')?.closest('table');if(mid)mid.classList.add('hide-score-col-9');
   }
   function render(){renderBoard('party_balloons',document.querySelector('.balloons-board'));renderBoard('party_packs',document.querySelector('.packs-board'));cleanLegacyScores()}
