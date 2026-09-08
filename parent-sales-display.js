@@ -55,6 +55,7 @@ renderMarketTop=function(){
 
 renderDetailTop=function(d){
   sanitizeData(d);ensureEnhancementUI();refreshTypeOptions(d);
+  document.querySelector('#detailTopRows')?.closest('table')?.classList.remove('hide-score-col-2');
   const rows=[...d.products].sort((a,b)=>directOpportunityOrder(d,a,b)).slice(0,50);
   $('detailTopNote').textContent=`从 ${d.products.length} 个有效ASIN筛选${d.excludedOldLowValue?` · 已排除 ${d.excludedOldLowValue} 个低价值老链接`:''}`;
   $('detailTopRows').innerHTML=rows.length?rows.map(x=>`<tr><td class="development-col">${decisionCell(d.key,x)}</td><td>${productCell(x)}</td><td>${opportunityType(d,x)}</td><td class="rank">#${fmt(x.category_rank)}</td><td>${moveCell(d,x)}</td><td>${rankHistory(d,x)}</td><td>${fmt(x.days_since_launch)}</td><td>${parentSalesCell(x)}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">暂无符合条件的商品。</td></tr>';
