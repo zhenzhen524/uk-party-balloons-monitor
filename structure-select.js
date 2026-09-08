@@ -6,11 +6,11 @@
     'valid-run-filter.js?v=20260827-valid1',
     'structure-select-base.js?v=20260826-history3',
     'threshold-rule.js?v=20260826-history3',
-    'parent-sales-display.js?v=20260908-shared-decision1',
+    'parent-sales-display.js?v=20260908-product-visible1',
     'market-panorama.js?v=20260826-panorama3',
     'history-brand-ui.js?v=20260902-column-headings1',
     'history-force.js?v=20260826-history-force2',
-    'dual-market-panorama-v2.js?v=20260827-market2',
+    'dual-market-panorama-v2.js?v=20260908-product-visible1',
     'market-copy-cleanup.js?v=20260827-copy1',
     'detail-workbench-cleanup.js?v=20260827-workbench1'
   ];
