@@ -32,6 +32,20 @@ async function loadCategory(key){
   const data={key,runs,latest,prev,prev2,products,prevProducts,prev2Products,prevMap,prev2Map,structures};
   data.metrics=calcMetrics(data);data.structureDerived=deriveStructures(data);return data;
 }
+async function loadHighPriceCategory(key){
+  const runs=await q(`monitor_runs?select=*&category_key=eq.${key}&source_status=in.(ok,partial)&order=collected_at.desc&limit=12`);
+  if(!runs.length)return null;
+  const latest=runs[0];
+  const latestAt=new Date(latest.collected_at).getTime();
+  const prev=runs.slice(1).find(r=>latestAt-new Date(r.collected_at).getTime()>=6*3600000)||runs[1]||null;
+  const [products,prevProducts]=await Promise.all([
+    q(`product_snapshots?select=*&run_id=eq.${latest.id}&order=category_rank.asc.nullslast`),
+    prev?q(`product_snapshots?select=*&run_id=eq.${prev.id}`):Promise.resolve([])
+  ]);
+  const prevMap=new Map(prevProducts.map(x=>[x.asin,x]));
+  const data={key,runs,latest,prev,prev2:null,products,prevProducts,prev2Products:[],prevMap,prev2Map:new Map(),structures:[]};
+  data.metrics=calcMetrics(data);data.structureDerived=[];return data;
+}
 function rankDiff(data,x){const p=data.prevMap.get(x.asin);const old=p?.category_rank??x.previous_rank??null;return {old,delta:old==null?null:old-x.category_rank,prev:p}}
 function calcMetrics(data){
   const cur=data.products,prev=data.prevProducts,top=cur.filter(x=>x.category_rank<=100),mid=cur.filter(x=>x.category_rank>=200&&x.category_rank<=400),prevTop=new Set(prev.filter(x=>x.category_rank<=100).map(x=>x.asin));
@@ -151,11 +165,11 @@ function renderDetailHighPrice(d){
     const rd=rankDiff(rankData,x),isNew=x.days_since_launch!=null&&x.days_since_launch<=90;
     const stage=isNew?'<span class="badge good">新品≤90天</span>':x.days_since_launch!=null&&x.days_since_launch<=180?'<span class="badge info">成长期91–180天</span>':'<span class="badge">成熟产品</span>';
     const judgement=rd.delta==null?'暂无上一期排名':rd.delta>=20?'排名明显上升':rd.delta>0?'排名小幅上升':rd.delta<=-20?'排名明显下降':rd.delta<0?'排名小幅下降':'排名持平';
-    return `<tr><td>${productCell(x)}</td><td><b>${money(x.price_gbp)}</b></td><td><b>${fmt(x.parent_sales_estimate)}</b></td><td>${stage}</td><td class="rank">${x.category_rank==null?'—':'#'+fmt(x.category_rank)}</td><td>${rd.old==null?'—':'#'+fmt(rd.old)}</td><td>${moveCell(d,x)}</td><td>${fmt(x.days_since_launch)}</td><td>${judgement}</td></tr>`;
+    return `<tr><td>${productCell(x)}</td><td><b>${money(x.price_gbp)}</b></td><td><b>${fmt(x.parent_sales_estimate)}</b></td><td>${stage}</td><td class="rank">${x.category_rank==null?'—':'#'+fmt(x.category_rank)}</td><td>${rd.old==null?'—':'#'+fmt(rd.old)}</td><td>${moveCell(rankData,x)}</td><td>${fmt(x.days_since_launch)}</td><td>${judgement}</td></tr>`;
   }).join(''):'<tr><td colspan="9" class="empty">当前采集样本中暂无“售价≥£17.99且父体月销量&gt;300”的产品。</td></tr>';
   bindImgs();
 }
 
 function bindNav(){document.querySelectorAll('.category-tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.category-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');const k=b.dataset.category;if(k==='compare'){$('comparePanel').classList.add('active');$('detailPanel').classList.remove('active')}else{$('comparePanel').classList.remove('active');$('detailPanel').classList.add('active');renderDetail(k)}}));document.querySelectorAll('.detail-tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.detail-tabs button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.detail-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.detail).classList.add('active')}))}
-async function load(){try{$('globalStatus').textContent='正在读取双类目…';const [b,p,bh,ph]=await Promise.all([loadCategory('party_balloons'),loadCategory('party_packs'),loadCategory('party_balloons_high_price').catch(()=>null),loadCategory('party_packs_high_price').catch(()=>null),loadDevelopmentDecisions().catch(()=>{})]);STORE.party_balloons=b;STORE.party_packs=p;HIGH_PRICE_STORE.party_balloons=bh;HIGH_PRICE_STORE.party_packs=ph;renderDual();if($('detailPanel').classList.contains('active'))renderDetail(activeKey)}catch(e){console.error(e);$('globalStatus').textContent='后台连接异常';$('globalStatus').className='status-pill warn';$('dualSummaryText').textContent='读取后台数据时发生错误：'+e.message}}
+async function load(){try{$('globalStatus').textContent='正在读取双类目…';const [b,p,bh,ph]=await Promise.all([loadCategory('party_balloons'),loadCategory('party_packs'),loadHighPriceCategory('party_balloons_high_price').catch(()=>null),loadHighPriceCategory('party_packs_high_price').catch(()=>null),loadDevelopmentDecisions().catch(()=>{})]);STORE.party_balloons=b;STORE.party_packs=p;HIGH_PRICE_STORE.party_balloons=bh;HIGH_PRICE_STORE.party_packs=ph;renderDual();if($('detailPanel').classList.contains('active'))renderDetail(activeKey)}catch(e){console.error(e);$('globalStatus').textContent='后台连接异常';$('globalStatus').className='status-pill warn';$('dualSummaryText').textContent='读取后台数据时发生错误：'+e.message}}
 bindNav();load();setInterval(load,43200000);
