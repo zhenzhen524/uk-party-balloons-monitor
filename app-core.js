@@ -144,7 +144,7 @@ function renderDetailMid(d){const rows=d.products.filter(x=>x.category_rank>=200
 function renderDetailHighPrice(d){
   const hp=HIGH_PRICE_STORE[d.key];
   const rankData=hp||d;
-  const eligible=(hp?.products||d.products).filter(x=>Number(x.price_gbp)>=17.99&&Number(x.parent_sales_estimate)>300);
+  const eligible=(hp?.products||d.products).filter(x=>Number(x.price_gbp)>=17.99&&Number(x.parent_sales_estimate)>=100);
   const rows=[...eligible].sort((a,b)=>{
     const an=a.days_since_launch!=null&&a.days_since_launch<=90?1:0,bn=b.days_since_launch!=null&&b.days_since_launch<=90?1:0;
     if(bn!==an)return bn-an;
@@ -166,7 +166,7 @@ function renderDetailHighPrice(d){
     const stage=isNew?'<span class="badge good">新品≤90天</span>':x.days_since_launch!=null&&x.days_since_launch<=180?'<span class="badge info">成长期91–180天</span>':'<span class="badge">成熟产品</span>';
     const judgement=rd.delta==null?'暂无上一期排名':rd.delta>=20?'排名明显上升':rd.delta>0?'排名小幅上升':rd.delta<=-20?'排名明显下降':rd.delta<0?'排名小幅下降':'排名持平';
     return `<tr><td>${productCell(x)}</td><td><b>${money(x.price_gbp)}</b></td><td><b>${fmt(x.parent_sales_estimate)}</b></td><td>${stage}</td><td class="rank">${x.category_rank==null?'—':'#'+fmt(x.category_rank)}</td><td>${rd.old==null?'—':'#'+fmt(rd.old)}</td><td>${moveCell(rankData,x)}</td><td>${fmt(x.days_since_launch)}</td><td>${judgement}</td></tr>`;
-  }).join(''):'<tr><td colspan="9" class="empty">当前采集样本中暂无“售价≥£17.99且父体月销量&gt;300”的产品。</td></tr>';
+  }).join(''):'<tr><td colspan="9" class="empty">当前采集样本中暂无“售价≥£17.99且父体月销量≥100”的产品。</td></tr>';
   bindImgs();
 }
 
