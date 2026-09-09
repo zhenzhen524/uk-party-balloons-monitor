@@ -166,7 +166,7 @@
 
       <section id="detailHighPrice" class="detail-panel">
         <div class="page-head"><div><h2>高价产品监控</h2><p>寻找高价位中已有销量验证的产品、新品进入和排名异动。</p></div><div id="detailHighPriceCount" class="page-count">—</div></div>
-        <div class="high-price-note"><strong>监控口径：</strong>采集端先在 Amazon UK 前端应用最低价 £17.99 并逐页采集，再保留父体近30天月销量&gt;300的产品；新品定义为上架≤90天。新版高价采集完成后，本页自动读取专用批次。</div>
+        <div class="high-price-note"><strong>监控口径：</strong>采集端先在 Amazon UK 前端应用最低价 £17.99 并逐页采集，再保留父体近30天月销量≥100的产品；新品定义为上架≤90天。新版高价采集完成后，本页自动读取专用批次。</div>
         <div id="detailHighPriceKpis" class="kpi-grid"></div>
         <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>价格</th><th>父体月销量</th><th>新品状态</th><th>当前排名</th><th>上一期排名</th><th>排名变化</th><th>上架天数</th><th>监控判断</th></tr></thead><tbody id="detailHighPriceRows"></tbody></table></div>
       </section>
@@ -175,7 +175,7 @@
 
   <footer>比较原则：两个类目必须采用同口径、近似时间窗口的数据才进行横向判断。Party Packs 未采集时所有相关位置明确显示“待采集”，不使用示例数据冒充真实市场数据。</footer>
 </div>
-<script src="app.js?v=20260909-high-rank-fix1"></script>
+<script src="app.js?v=20260909-sales100-1"></script>
 <script src="structure-select.js?v=20260908-owner1"></script>
 </body>
 </html>
