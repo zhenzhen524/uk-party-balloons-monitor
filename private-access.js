@@ -25,7 +25,7 @@
   gate.innerHTML=`<div class="private-card">
     <div class="private-icon">🔒</div>
     <div class="private-eyebrow">PRIVATE MARKET INTELLIGENCE</div>
-    <h1>英国站派对类目监控中心</h1>
+    <h1>英国站 / 德国站派对类目监控中心</h1>
     <p>请输入访问口令。验证成功后，市场数据将通过 Supabase 私有服务端通道加载。</p>
     <form id="privateAccessForm">
       <div class="private-field"><input id="privatePassword" type="password" autocomplete="current-password" placeholder="输入访问口令" aria-label="访问口令"><button id="privateSubmit" type="submit">进入看板</button></div>
@@ -93,9 +93,9 @@
     window.__dashboardAuthVerified=true;
     setMsg('验证通过，正在加载市场数据…');
     try{
-      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260909-development-fix1');
+      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260914-de-market1');
       window.__dashboardAuthorized=true;
-      if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260909-development-fix1');
+      if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260914-de-market1');
       gate.remove();
       document.body.classList.remove('private-locked');
       const boot=document.getElementById('privateBootStyle');if(boot)boot.remove();
