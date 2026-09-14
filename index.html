@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Amazon UK 派对类目机会监控中心</title>
-<link rel="stylesheet" href="style.css?v=20260909-development-fix1">
+<title>Amazon UK/DE 派对类目机会监控中心</title>
+<link rel="stylesheet" href="style.css?v=20260914-de-market1">
 <link rel="stylesheet" href="structure-select.css?v=20260826-history3">
 <style id="privateBootStyle">body.private-locked{overflow:hidden;background:#f4f6fa}body.private-locked .app-shell{visibility:hidden}</style>
 </head>
@@ -15,11 +15,12 @@
 <div class="app-shell">
   <header class="topbar">
     <div>
-      <div class="eyebrow">Amazon UK · Party Category Intelligence</div>
-      <h1>英国站派对类目机会监控中心</h1>
+      <div id="marketEyebrow" class="eyebrow">Amazon UK · Party Category Intelligence</div>
+      <h1 id="marketTitle">英国站派对类目机会监控中心</h1>
       <div class="subtitle">Party Balloons × Party Packs · Supabase 动态后台 · 每日更新2次</div>
     </div>
     <div class="market-state">
+      <div class="market-switch" aria-label="站点切换"><button class="active" data-market="UK">英国站</button><button data-market="DE">德国站</button></div>
       <span id="globalStatus" class="status-pill">正在连接…</span>
       <div id="syncStatus" class="sync-mini">等待双类目数据</div>
     </div>
@@ -36,7 +37,7 @@
       <div class="dual-summary">
         <div class="summary-mark">✦</div>
         <div class="summary-main">
-          <div class="summary-kicker">英国派对市场智能摘要</div>
+          <div id="marketSummaryKicker" class="summary-kicker">英国派对市场智能摘要</div>
           <div id="dualSummaryText" class="summary-text">正在读取 Party Balloons；Party Packs 暂未采集时会以占位状态展示。</div>
         </div>
         <div class="summary-times"><div><span>Party Balloons</span><b id="balloonsTime">—</b></div><div><span>Party Packs</span><b id="packsTime">待采集</b></div></div>
@@ -107,7 +108,7 @@
       </section>
 
       <section class="section-block">
-        <div class="section-head"><div><h2>英国 Party Market 今日开发关注 Top 50</h2><p>两个类目合并竞争开发注意力；每个商品可记录是否开发。</p></div><div id="marketTopNote" class="section-side">—</div></div>
+        <div class="section-head"><div><h2 id="marketTopTitle">英国 Party Market 今日开发关注 Top 50</h2><p>两个类目合并竞争开发注意力；每个商品可记录是否开发。</p></div><div id="marketTopNote" class="section-side">—</div></div>
         <div class="table-wrap"><table class="product-table market-table"><thead><tr><th>类目</th><th class="development-col">是否开发</th><th class="developer-col">开发负责人</th><th>商品</th><th>当前排名</th><th>本轮变化</th><th>上架天数</th><th>父体销量</th></tr></thead><tbody id="marketTopRows"><tr><td colspan="8" class="empty">正在读取…</td></tr></tbody></table></div>
       </section>
 
@@ -166,7 +167,7 @@
 
       <section id="detailHighPrice" class="detail-panel">
         <div class="page-head"><div><h2>高价产品监控</h2><p>寻找高价位中已有销量验证的产品、新品进入和排名异动。</p></div><div id="detailHighPriceCount" class="page-count">—</div></div>
-        <div class="high-price-note"><strong>监控口径：</strong>采集端先在 Amazon UK 前端应用最低价 £17.99 并逐页采集，再保留父体近30天月销量≥100的产品；新品定义为上架≤90天。新版高价采集完成后，本页自动读取专用批次。</div>
+        <div id="highPriceRule" class="high-price-note"><strong>监控口径：</strong>采集端先在 Amazon UK 前端应用最低价 £17.99 并逐页采集，再保留父体近30天月销量≥100的产品；新品定义为上架≤90天。高价采集完成后，本页自动读取专用批次。</div>
         <div id="detailHighPriceKpis" class="kpi-grid"></div>
         <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>价格</th><th>父体月销量</th><th>新品状态</th><th>当前排名</th><th>上一期排名</th><th>排名变化</th><th>上架天数</th><th>监控判断</th></tr></thead><tbody id="detailHighPriceRows"></tbody></table></div>
       </section>
@@ -175,7 +176,7 @@
 
   <footer>比较原则：两个类目必须采用同口径、近似时间窗口的数据才进行横向判断。Party Packs 未采集时所有相关位置明确显示“待采集”，不使用示例数据冒充真实市场数据。</footer>
 </div>
-<script src="app.js?v=20260909-development-fix1"></script>
-<script src="structure-select.js?v=20260909-development-fix1"></script>
+<script src="app.js?v=20260914-de-market1"></script>
+<script src="structure-select.js?v=20260914-de-market1"></script>
 </body>
 </html>
