@@ -1,7 +1,7 @@
 /* Dual-category market panorama v2. Replaces old technical KPI cards with market/development metrics. */
 (function(){
   const compact=n=>{if(n==null||!Number.isFinite(Number(n)))return '—';const v=Number(n),a=Math.abs(v);if(a>=1e6)return(v/1e6).toFixed(a>=1e7?1:2).replace(/\.0+$/,'')+'M';if(a>=1e3)return(v/1e3).toFixed(a>=1e5?0:1).replace(/\.0$/,'')+'K';return Math.round(v).toLocaleString('en-GB')};
-  const gbp=n=>n==null||!Number.isFinite(Number(n))?'—':'£'+compact(n);
+  const gbp=n=>n==null||!Number.isFinite(Number(n))?'—':marketMeta().symbol+compact(n);
   const med=a=>{const x=a.filter(v=>v!=null&&Number.isFinite(Number(v))).map(Number).sort((a,b)=>a-b);if(!x.length)return null;const m=Math.floor(x.length/2);return x.length%2?x[m]:(x[m-1]+x[m])/2};
   const norm=s=>String(s||'未知品牌').trim().toLowerCase();
   const pc=(a,b)=>b?100*a/b:0;
