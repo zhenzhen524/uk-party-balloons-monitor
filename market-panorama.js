@@ -7,7 +7,7 @@
     if(a>=1000)return (v/1000).toFixed(a>=100000?0:1).replace(/\.0$/,'')+'K';
     return Math.round(v).toLocaleString('en-GB');
   };
-  const gbpCompact=n=>n==null||!Number.isFinite(Number(n))?'—':'£'+compact(Number(n));
+  const gbpCompact=n=>n==null||!Number.isFinite(Number(n))?'—':marketMeta().symbol+compact(Number(n));
   const norm=s=>String(s||'未知品牌').trim().toLowerCase();
   const med=a=>{
     const x=a.filter(v=>v!=null&&Number.isFinite(Number(v))).map(Number).sort((a,b)=>a-b);
@@ -119,3 +119,4 @@
     const d=STORE?.[key];if(d)renderPanorama(d);
   };
 })();
+
