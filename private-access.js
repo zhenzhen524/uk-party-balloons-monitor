@@ -53,8 +53,9 @@
       headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','x-dashboard-password':window.__dashboardPassword||''},
       body:JSON.stringify({action,...payload})
     });
-    if(!r.ok)throw new Error('保存失败（HTTP '+r.status+'）');
-    return r.json();
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){const e=new Error(r.status===409?'该商品已被其他同事选择并锁定。':'保存失败（HTTP '+r.status+'）');e.status=r.status;e.data=data;throw e}
+    return data;
   }
 
   async function verify(password){
@@ -93,7 +94,7 @@
     window.__dashboardAuthVerified=true;
     setMsg('验证通过，正在加载市场数据…');
     try{
-      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260914-de-market1');
+      if(typeof window.loadCategory!=='function') await loadScript('app-core.js?v=20260915-development-lock1');
       window.__dashboardAuthorized=true;
       if(!window.__structureLoaderInstalled) await loadScript('structure-select.js?v=20260914-de-market1');
       gate.remove();
