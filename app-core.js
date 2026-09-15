@@ -76,16 +76,16 @@ function tagCell(x){return [x.product_type,x.colour_style,x.occasion].filter(Boo
 function priorityBadge(p){const cls=p==='P0'?'bad':p==='P1'?'warn':p==='P2'?'info':'good';return `<span class="badge ${cls}">${p}</span>`}
 const decisionKey=(categoryKey,asin)=>`${categoryKey}|${String(asin||'').toUpperCase()}`;
 function decisionCell(categoryKey,x){
-  const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{},value=saved.decision||'';
-  return `<select class="development-select" data-role="decision" data-category="${esc(categoryKey)}" data-asin="${esc(x.asin)}" aria-label="是否开发 ${esc(x.asin)}"><option value="" ${value?'':'selected'} disabled>请选择</option><option value="是" ${value==='是'?'selected':''}>是</option><option value="否" ${value==='否'?'selected':''}>否</option></select>`;
+  const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{},value=saved.decision||'',locked=value==='是';
+  return `<select class="development-select${locked?' locked':''}" data-role="decision" data-category="${esc(categoryKey)}" data-asin="${esc(x.asin)}" data-locked="${locked?'1':'0'}" aria-label="是否开发 ${esc(x.asin)}" title="${locked?'已锁定，不能修改':'选择是否开发'}" ${locked?'disabled':''}><option value="" ${value?'':'selected'} disabled>请选择</option><option value="是" ${value==='是'?'selected':''}>${locked?'是 · 已锁定':'是'}</option><option value="否" ${value==='否'?'selected':''}>否</option></select>`;
 }
 function developerCell(categoryKey,x){
-  const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{},owner=saved.developer_name||'',enabled=saved.decision==='是';
-  return `<select class="developer-select" data-role="developer" data-category="${esc(categoryKey)}" data-asin="${esc(x.asin)}" aria-label="开发负责人 ${esc(x.asin)}" ${enabled?'':'disabled'}><option value="" ${owner?'':'selected'}>请选择</option><option value="芷瑜" ${owner==='芷瑜'?'selected':''}>芷瑜</option><option value="乐辉" ${owner==='乐辉'?'selected':''}>乐辉</option></select>`;
+  const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{},owner=saved.developer_name||'',enabled=saved.decision==='是',locked=enabled;
+  return `<select class="developer-select${locked?' locked':''}" data-role="developer" data-category="${esc(categoryKey)}" data-asin="${esc(x.asin)}" data-locked="${locked?'1':'0'}" aria-label="开发负责人 ${esc(x.asin)}" title="${locked?'负责人已随开发状态锁定':'选择开发负责人'}" ${locked||!enabled?'disabled':''}><option value="" ${owner?'':'selected'}>请选择</option><option value="芷瑜" ${owner==='芷瑜'?'selected':''}>芷瑜</option><option value="乐辉" ${owner==='乐辉'?'selected':''}>乐辉</option></select>`;
 }
 function decisionStatusCell(categoryKey,x){
   const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{};
-  if(saved.decision==='是')return `<span class="development-status yes">${esc(saved.developer_name||'待指定')} · 已开发</span>`;
+  if(saved.decision==='是')return `<span class="development-status yes">${esc(saved.developer_name||'待指定')} · 已锁定</span>`;
   if(saved.decision==='否')return '<span class="development-status no">暂不开发</span>';
   return '<span class="development-status pending">未选择</span>';
 }
@@ -93,15 +93,16 @@ function bindDevelopmentSelectors(){
   document.querySelectorAll('select[data-role]:not([data-bound])').forEach(el=>{
     el.dataset.bound='1';
     el.addEventListener('change',async()=>{
+      if(el.dataset.locked==='1')return;
       const row=el.closest('tr'),decisionEl=row.querySelector('[data-role="decision"]'),ownerEl=row.querySelector('[data-role="developer"]');
       const key=decisionKey(el.dataset.category,el.dataset.asin),old=DEVELOPMENT_DECISIONS.get(key)||{},decision=decisionEl.value;
       if(el.dataset.role==='decision'&&decision==='是'){ownerEl.disabled=false;if(!ownerEl.value){ownerEl.focus();return}}
       if(decision==='否'){ownerEl.value='';ownerEl.disabled=true}
       const developerName=decision==='是'?ownerEl.value:null;if(decision==='是'&&!developerName)return;
       decisionEl.disabled=true;ownerEl.disabled=true;el.classList.add('saving');
-      try{if(typeof window.__dashboardPrivateAction!=='function')throw new Error('私有保存通道未就绪');await window.__dashboardPrivateAction('upsert_development_decision',{marketplace:ACTIVE_MARKET,category_key:el.dataset.category,asin:el.dataset.asin,decision,developer_name:developerName});DEVELOPMENT_DECISIONS.set(key,{decision,developer_name:developerName});el.classList.add('saved');setTimeout(()=>el.classList.remove('saved'),1200)}
-      catch(e){decisionEl.value=old.decision||'';ownerEl.value=old.developer_name||'';alert(e.message||'开发状态保存失败，请重试。')}
-      finally{decisionEl.disabled=false;ownerEl.disabled=decisionEl.value!=='是';el.classList.remove('saving')}
+      try{if(typeof window.__dashboardPrivateAction!=='function')throw new Error('私有保存通道未就绪');const rows=await window.__dashboardPrivateAction('upsert_development_decision',{marketplace:ACTIVE_MARKET,category_key:el.dataset.category,asin:el.dataset.asin,decision,developer_name:developerName});const saved=Array.isArray(rows)&&rows[0]?rows[0]:{decision,developer_name:developerName};DEVELOPMENT_DECISIONS.set(key,saved);el.classList.add('saved');setTimeout(()=>el.classList.remove('saved'),1200);renderDevelopmentDecisionViews()}
+      catch(e){decisionEl.value=old.decision||'';ownerEl.value=old.developer_name||'';if(e.status===409)await refreshDevelopmentDecisions(true);alert(e.message||'开发状态保存失败，请重试。')}
+      finally{if(decisionEl.isConnected&&decisionEl.dataset.locked!=='1'){decisionEl.disabled=false;ownerEl.disabled=decisionEl.value!=='是'}el.classList.remove('saving')}
     });
   });
 }
@@ -115,6 +116,16 @@ async function loadDevelopmentDecisions(){
     }catch(e){lastError=e}
   }
   console.warn('开发状态读取失败，保留当前页面已加载状态。',lastError);
+}
+function developmentDecisionSignature(){return [...DEVELOPMENT_DECISIONS.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}:${v.decision||''}:${v.developer_name||''}:${v.updated_at||''}`).join('|')}
+function renderDevelopmentDecisionViews(){if($('marketTopRows'))renderMarketTop();const detail=$('detailPanel');if(detail?.classList.contains('active')&&STORE[activeKey])renderDetailTop(STORE[activeKey])}
+let developmentSyncBusy=false;
+async function refreshDevelopmentDecisions(force=false){
+  if(developmentSyncBusy)return;
+  if(!force&&document.activeElement?.matches?.('.development-select,.developer-select'))return;
+  developmentSyncBusy=true;const before=developmentDecisionSignature();
+  try{await loadDevelopmentDecisions();if(force||before!==developmentDecisionSignature())renderDevelopmentDecisionViews()}
+  finally{developmentSyncBusy=false}
 }
 
 function setBoard(prefix,data){
@@ -187,4 +198,4 @@ function applyMarketCopy(){const m=marketMeta();document.documentElement.dataset
 async function switchMarket(code){if(code===ACTIVE_MARKET)return;ACTIVE_MARKET=code;STORE={party_balloons:null,party_packs:null};HIGH_PRICE_STORE={party_balloons:null,party_packs:null};DEVELOPMENT_DECISIONS=new Map();applyMarketCopy();await load()}
 async function load(){try{applyMarketCopy();$('globalStatus').textContent='正在读取双类目…';const [b,p,bh,ph]=await Promise.all([loadCategory('party_balloons'),loadCategory('party_packs'),loadHighPriceCategory('party_balloons_high_price').catch(()=>null),loadHighPriceCategory('party_packs_high_price').catch(()=>null),loadDevelopmentDecisions().catch(()=>{})]);STORE.party_balloons=b;STORE.party_packs=p;HIGH_PRICE_STORE.party_balloons=bh;HIGH_PRICE_STORE.party_packs=ph;renderDual();if($('detailPanel').classList.contains('active'))renderDetail(activeKey)}catch(e){console.error(e);$('globalStatus').textContent='后台连接异常';$('globalStatus').className='status-pill warn';$('dualSummaryText').textContent='读取后台数据时发生错误：'+e.message}}
 document.querySelectorAll('[data-market]').forEach(b=>b.addEventListener('click',()=>switchMarket(b.dataset.market)));
-bindNav();load();setInterval(load,43200000);
+bindNav();load();setInterval(load,43200000);setInterval(()=>refreshDevelopmentDecisions(false),5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDevelopmentDecisions(false)});window.addEventListener('focus',()=>refreshDevelopmentDecisions(false));
