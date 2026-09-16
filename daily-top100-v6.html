@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Amazon UK/DE 派对类目机会监控中心</title>
+<link rel="stylesheet" href="style.css?v=top100-v6">
+<link rel="stylesheet" href="structure-select.css?v=20260826-history3">
+<style id="privateBootStyle">body.private-locked{overflow:hidden;background:#f4f6fa}body.private-locked .app-shell{visibility:hidden}</style>
+</head>
+<body class="private-locked">
+<div class="app-shell">
+  <header class="topbar">
+    <div>
+      <div id="marketEyebrow" class="eyebrow">Amazon UK · Party Category Intelligence</div>
+      <h1 id="marketTitle">英国站派对类目机会监控中心</h1>
+      <div class="subtitle">Party Balloons × Party Packs · Supabase 动态后台 · 每日更新2次</div>
+    </div>
+    <div class="market-state">
+      <div class="market-switch" aria-label="站点切换"><button class="active" data-market="UK">英国站</button><button data-market="DE">德国站</button></div>
+      <span id="globalStatus" class="status-pill">正在连接…</span>
+      <div id="syncStatus" class="sync-mini">等待双类目数据</div>
+    </div>
+  </header>
+
+  <nav class="category-tabs" aria-label="类目切换">
+    <button class="active" data-category="compare">双类目总览</button>
+    <button data-category="party_balloons">Party Balloons</button>
+    <button data-category="party_packs">Party Packs <span id="packsDot" class="tiny-dot pending"></span></button>
+  </nav>
+
+  <main>
+    <section id="comparePanel" class="category-panel active">
+      <div class="dual-summary">
+        <div class="summary-mark">✦</div>
+        <div class="summary-main">
+          <div id="marketSummaryKicker" class="summary-kicker">英国派对市场智能摘要</div>
+          <div id="dualSummaryText" class="summary-text">正在读取 Party Balloons；Party Packs 暂未采集时会以占位状态展示。</div>
+        </div>
+        <div class="summary-times"><div><span>Party Balloons</span><b id="balloonsTime">—</b></div><div><span>Party Packs</span><b id="packsTime">待采集</b></div></div>
+      </div>
+
+      <section class="section-block">
+        <div class="section-head"><div><h2>双类目核心盘面</h2><p>两个类目采用完全相同的指标口径，便于同步横向观察。</p></div><div id="compareHint" class="section-side">Party Packs 待首次采集</div></div>
+        <div class="category-compare-grid">
+          <article class="category-board balloons-board">
+            <div class="category-board-head"><div><span class="category-label">PARTY BALLOONS</span><h3>气球类目</h3></div><span id="balloonsState" class="board-state live">实时</span></div>
+            <div class="board-metrics">
+              <div><span>排名≤100</span><b id="bTop">—</b><small id="bTopDelta">—</small></div>
+              <div><span>#200–400</span><b id="bMid">—</b><small id="bMidDelta">—</small></div>
+              <div><span>有效 ASIN</span><b id="bTotal">—</b><small>完整批次</small></div>
+              <div><span>价格中位数</span><b id="bPrice">—</b><small>当前样本</small></div>
+              <div><span>Top100换手</span><b id="bChurn">—</b><small>新进 / 退出</small></div>
+              <div><span>P0机会</span><b id="bP0">—</b><small>突破 / 极速前移</small></div>
+              <div><span>≤180天新品</span><b id="bYoung">—</b><small>Top100新品占比</small></div>
+              <div><span>机会指数</span><b id="bIndex">—</b><small>规则评分 /100</small></div>
+            </div>
+          </article>
+
+          <article class="category-board packs-board pending-board" id="packsBoard">
+            <div class="category-board-head"><div><span class="category-label">PARTY PACKS</span><h3>派对套装类目</h3></div><span id="packsState" class="board-state pending">待采集</span></div>
+            <div class="board-metrics">
+              <div><span>排名≤100</span><b id="pTop">—</b><small id="pTopDelta">等待数据</small></div>
+              <div><span>#200–400</span><b id="pMid">—</b><small id="pMidDelta">等待数据</small></div>
+              <div><span>有效 ASIN</span><b id="pTotal">—</b><small>等待完整批次</small></div>
+              <div><span>价格中位数</span><b id="pPrice">—</b><small>等待样本</small></div>
+              <div><span>Top100换手</span><b id="pChurn">—</b><small>等待两轮数据</small></div>
+              <div><span>P0机会</span><b id="pP0">—</b><small>等待异动</small></div>
+              <div><span>≤180天新品</span><b id="pYoung">—</b><small>等待新品数据</small></div>
+              <div><span>机会指数</span><b id="pIndex">—</b><small>待首次采集</small></div>
+            </div>
+            <div id="packsPlaceholder" class="pending-overlay"><strong>Party Packs 数据待采集</strong><span>页面结构已经准备好；首次写入 category_key=party_packs 后自动填充。</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head"><div><h2>今日类目机会指数</h2><p>从新品进入、排名突破、#200–400活跃度、换手、价格与结构变化综合形成规则指数。</p></div></div>
+        <div class="index-compare">
+          <div class="index-row"><div class="index-name"><b>Party Balloons</b><span id="bIndexText">—</span></div><div class="index-track"><span id="bIndexBar"></span></div></div>
+          <div class="index-row"><div class="index-name"><b>Party Packs</b><span id="pIndexText">待采集</span></div><div class="index-track pending-track"><span id="pIndexBar"></span></div></div>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head"><div><h2>双类目机会雷达</h2><p>同口径比较：快速突破、新品潜力、价格机会、结构变化与场景活跃度。</p></div></div>
+        <div class="dual-radar">
+          <div class="radar-head"><span>维度</span><b>Party Balloons</b><b>Party Packs</b></div>
+          <div class="radar-row"><span>🚀 快速突破</span><div id="bRadarBreak">—</div><div id="pRadarBreak" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>🌱 新品潜力</span><div id="bRadarNew">—</div><div id="pRadarNew" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>💰 价格机会</span><div id="bRadarPrice">—</div><div id="pRadarPrice" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>🧩 结构机会</span><div id="bRadarStruct">—</div><div id="pRadarStruct" class="pending-text">待采集</div></div>
+          <div class="radar-row"><span>🎯 场景活跃</span><div id="bRadarScene">—</div><div id="pRadarScene" class="pending-text">待采集</div></div>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head"><div><h2>跨类目场景趋势</h2><p>只比较两个类目都能识别的场景标签；没有 Party Packs 数据前不做伪比较。</p></div><div id="sceneNote" class="section-side">等待 Party Packs</div></div>
+        <div id="sceneCompare" class="scene-grid">
+          <div class="scene-placeholder"><b>Birthday</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+          <div class="scene-placeholder"><b>Baby Shower</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+          <div class="scene-placeholder"><b>Wedding</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+          <div class="scene-placeholder"><b>Hen Party</b><span>Party Balloons：读取中</span><span>Party Packs：待采集</span></div>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head"><div><h2 id="marketTopTitle">英国 Party Market 每日Top 100</h2><p>两个类目合并竞争开发注意力；每个商品可记录是否开发。</p></div><div id="marketTopNote" class="section-side">—</div></div>
+        <div class="table-wrap"><table class="product-table market-table"><thead><tr><th>序号</th><th>类目</th><th class="development-col">是否开发</th><th class="developer-col">开发负责人</th><th>商品</th><th>当前排名</th><th>本轮变化</th><th>上架天数</th><th>父体销量</th></tr></thead><tbody id="marketTopRows"><tr><td colspan="9" class="empty">正在读取…</td></tr></tbody></table></div>
+      </section>
+
+      <div class="quality-grid section-block">
+        <article class="analysis-card"><div class="card-head"><div><h2>Party Balloons 数据质量</h2><p id="bQualityTime">—</p></div></div><div id="bQuality" class="mini-metrics quality-mini"></div></article>
+        <article class="analysis-card pending-quality"><div class="card-head"><div><h2>Party Packs 数据质量</h2><p id="pQualityTime">待首次采集</p></div></div><div id="pQuality" class="pending-quality-box">暂无数据。首次采集后这里将显示销量、主图、评论、BSR覆盖率和同步状态。</div></article>
+      </div>
+    </section>
+
+    <section id="detailPanel" class="category-panel">
+      <div class="detail-head">
+        <div><div id="detailEyebrow" class="eyebrow">Amazon UK · Party Balloons</div><h2 id="detailTitle">Party Balloons 类目监控</h2><p id="detailSubtitle">独立查看该类目的总览、异动、结构与#200–400潜力。</p></div>
+        <span id="detailStatus" class="status-pill">—</span>
+      </div>
+      <nav class="detail-tabs">
+        <button class="active" data-detail="detailOverview">类目总览</button>
+        <button data-detail="detailChanges">异动 ASIN</button>
+        <button data-detail="detailStructure">结构变化</button>
+        <button data-detail="detailMid">#200–400 潜力</button>
+        <button data-detail="detailHighPrice">高价产品监控</button>
+      </nav>
+
+      <section id="detailOverview" class="detail-panel active">
+        <div id="detailSummary" class="smart-summary compact-summary"><div class="summary-icon">✦</div><div><div class="summary-kicker">类目智能摘要</div><div id="detailSummaryText" class="summary-text">—</div></div><div id="detailTime" class="summary-time">—</div></div>
+        <div id="detailKpis" class="kpi-grid"></div>
+        <section class="section-block"><div class="section-head"><div><h2>今日机会雷达</h2><p>排名动能、新品效率、价格空间与结构变化。</p></div></div><div id="detailRadar" class="radar-grid"></div></section>
+        <section class="section-block"><div class="section-head"><div><h2>单类目开发观察 Top 50</h2><p>开发决策统一在“双类目总览”操作；此处只读显示共享状态。</p></div><div id="detailTopNote" class="section-side">—</div></div><div class="table-wrap"><table class="product-table"><thead><tr><th class="development-col">开发状态</th><th>商品</th><th>机会类型</th><th>当前排名</th><th>本轮变化</th><th>近三轮排名</th><th>上架天数</th><th>父体销量</th></tr></thead><tbody id="detailTopRows"></tbody></table></div></section>
+      </section>
+
+      <section id="detailChanges" class="detail-panel">
+        <div class="page-head"><div><h2>异动 ASIN 优先队列</h2><p>突破和大幅前移自动置顶。</p></div><div id="detailChangeCount" class="page-count">—</div></div>
+        <div id="detailPriority" class="priority-grid"></div>
+        <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>优先级</th><th>当前排名</th><th>上次排名</th><th>变化</th><th>价格</th><th>销量</th><th>评分/评论</th><th>标签</th></tr></thead><tbody id="detailChangeRows"></tbody></table></div>
+      </section>
+
+      <section id="detailStructure" class="detail-panel">
+        <div class="page-head"><div><h2>产品结构趋势</h2><p>选择一个结构维度，单独查看该维度的增长、下降、主流和新出现变化。</p></div></div>
+        <div id="detailStructDimSwitch" class="structure-dim-switch">
+          <button class="active" data-dim="product_type">产品类型</button>
+          <button data-dim="colour_style">颜色风格</button>
+          <button data-dim="pack_size">数量规格</button>
+          <button data-dim="size_text">尺寸</button>
+          <button data-dim="occasion">场景</button>
+          <button data-dim="material">材质</button>
+        </div>
+        <div id="detailStructHint" class="structure-dim-hint">当前查看：产品类型</div>
+        <div id="detailStructCards" class="structure-radar-grid"></div>
+        <div class="table-wrap"><table class="product-table structure-table"><thead><tr><th>标签</th><th>数量</th><th>当前占比</th><th>上一轮</th><th>变化</th><th>状态</th></tr></thead><tbody id="detailStructRows"></tbody></table></div>
+      </section>
+
+      <section id="detailMid" class="detail-panel">
+        <div class="page-head"><div><h2>#200–400 潜力观察池</h2><p>快速前移商品自动置顶。</p></div><div id="detailMidCount" class="page-count">—</div></div>
+        <div id="detailMidPriority" class="priority-grid"></div>
+        <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>优先级</th><th>当前排名</th><th>上次排名</th><th>前移</th><th>价格</th><th>销量</th><th>上架天数</th><th>突破评分</th><th>判断</th></tr></thead><tbody id="detailMidRows"></tbody></table></div>
+      </section>
+
+      <section id="detailHighPrice" class="detail-panel">
+        <div class="page-head"><div><h2>高价产品监控</h2><p>寻找高价位中已有销量验证的产品、新品进入和排名异动。</p></div><div id="detailHighPriceCount" class="page-count">—</div></div>
+        <div id="highPriceRule" class="high-price-note"><strong>监控口径：</strong>采集端先在 Amazon UK 前端应用最低价 £17.99 并逐页采集，再保留父体近30天月销量≥100的产品；新品定义为上架≤90天。高价采集完成后，本页自动读取专用批次。</div>
+        <div id="detailHighPriceKpis" class="kpi-grid"></div>
+        <div class="table-wrap"><table class="product-table"><thead><tr><th>商品</th><th>价格</th><th>父体月销量</th><th>新品状态</th><th>当前排名</th><th>上一期排名</th><th>排名变化</th><th>上架天数</th><th>监控判断</th></tr></thead><tbody id="detailHighPriceRows"></tbody></table></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>比较原则：两个类目必须采用同口径、近似时间窗口的数据才进行横向判断。Party Packs 未采集时所有相关位置明确显示“待采集”，不使用示例数据冒充真实市场数据。</footer>
+</div>
+<script src="bootstrap-top100-v6.js"></script>
+</body>
+</html>
