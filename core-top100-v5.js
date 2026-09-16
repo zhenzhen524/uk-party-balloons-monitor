@@ -1,0 +1,201 @@
+const SB='https://wsuwnmrbdcorercrtcgy.supabase.co';
+const KEY='sb_publishable_4uTDBH31bP62rvnB59ee1A_iQvnqLEC';
+const H={apikey:KEY,Authorization:'Bearer '+KEY};
+const $=id=>document.getElementById(id);
+const q=async p=>{const r=await fetch(SB+'/rest/v1/'+p,{headers:H});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()};
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[m]));
+const fmt=n=>n==null?'—':Number(n).toLocaleString('en-GB');
+let ACTIVE_MARKET='UK';
+const marketMeta=()=>ACTIVE_MARKET==='DE'?{code:'DE',country:'德国站',amazon:'Amazon DE',origin:'https://www.amazon.de',symbol:'€'}:{code:'UK',country:'英国站',amazon:'Amazon UK',origin:'https://www.amazon.co.uk',symbol:'£'};
+const money=n=>n==null?'—':marketMeta().symbol+Number(n).toFixed(2);
+const when=s=>s?new Date(s).toLocaleString('zh-CN',{hour12:false}):'—';
+const safe=u=>/^https:\/\//i.test(String(u||''))?String(u):'';
+const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
+const median=a=>{const x=a.filter(v=>v!=null&&Number.isFinite(Number(v))).map(Number).sort((a,b)=>a-b);if(!x.length)return null;const m=Math.floor(x.length/2);return x.length%2?x[m]:(x[m-1]+x[m])/2};
+const pct=(a,b)=>b?100*a/b:0;
+let STORE={party_balloons:null,party_packs:null},HIGH_PRICE_STORE={party_balloons:null,party_packs:null},DEVELOPMENT_DECISIONS=new Map(),activeKey='party_balloons';
+
+function splitTags(v){return String(v||'').split(/[\/|,;]/).map(s=>s.trim()).filter(Boolean)}
+function productCell(x){const link=safe(x.source_url)||`${marketMeta().origin}/dp/${encodeURIComponent(x.asin)}`;const img=safe(x.image_url);return `<div class="product">${img?`<img class="thumb" loading="lazy" src="${esc(img)}" alt="">`:'<div class="ph">暂无<br>主图</div>'}<div><div class="ptitle"><a href="${esc(link)}" target="_blank" rel="noopener">${esc(x.title||'未获取标题')}</a></div><div class="asin">${esc(x.asin)}${x.brand?' · '+esc(x.brand):''}</div></div></div>`}
+function bindImgs(){document.querySelectorAll('img.thumb:not([data-bound])').forEach(i=>{i.dataset.bound='1';i.onerror=()=>{const d=document.createElement('div');d.className='ph';d.innerHTML='图片<br>加载失败';i.replaceWith(d)}})}
+function categoryTag(key){return `<span class="category-tag ${key==='party_packs'?'packs':'balloons'}">${key==='party_packs'?'Party Packs':'Party Balloons'}</span>`}
+
+async function loadCategory(key){
+  const runs=await q(`monitor_runs?select=*&marketplace=eq.${ACTIVE_MARKET}&category_key=eq.${key}&order=collected_at.desc&limit=3`);
+  if(!runs.length)return null;
+  const latest=runs[0],prev=runs[1]||null,prev2=runs[2]||null;
+  const [products,prevProducts,prev2Products,structures]=await Promise.all([
+    q(`product_snapshots?select=*&run_id=eq.${latest.id}&order=category_rank.asc.nullslast`),
+    prev?q(`product_snapshots?select=*&run_id=eq.${prev.id}`):Promise.resolve([]),
+    prev2?q(`product_snapshots?select=*&run_id=eq.${prev2.id}`):Promise.resolve([]),
+    q(`structure_snapshots?select=*&run_id=eq.${latest.id}&order=dimension.asc,item_count.desc`).catch(()=>[])
+  ]);
+  const prevMap=new Map(prevProducts.map(x=>[x.asin,x])),prev2Map=new Map(prev2Products.map(x=>[x.asin,x]));
+  const data={key,runs,latest,prev,prev2,products,prevProducts,prev2Products,prevMap,prev2Map,structures};
+  data.metrics=calcMetrics(data);data.structureDerived=deriveStructures(data);return data;
+}
+async function loadHighPriceCategory(key){
+  const runs=await q(`monitor_runs?select=*&marketplace=eq.${ACTIVE_MARKET}&category_key=eq.${key}&source_status=in.(ok,partial)&order=collected_at.desc&limit=12`);
+  if(!runs.length)return null;
+  const latest=runs[0];
+  const latestAt=new Date(latest.collected_at).getTime();
+  const prev=runs.slice(1).find(r=>latestAt-new Date(r.collected_at).getTime()>=6*3600000)||runs[1]||null;
+  const [products,prevProducts]=await Promise.all([
+    q(`product_snapshots?select=*&run_id=eq.${latest.id}&order=category_rank.asc.nullslast`),
+    prev?q(`product_snapshots?select=*&run_id=eq.${prev.id}`):Promise.resolve([])
+  ]);
+  const prevMap=new Map(prevProducts.map(x=>[x.asin,x]));
+  const data={key,runs,latest,prev,prev2:null,products,prevProducts,prev2Products:[],prevMap,prev2Map:new Map(),structures:[]};
+  data.metrics=calcMetrics(data);data.structureDerived=[];return data;
+}
+function rankDiff(data,x){const p=data.prevMap.get(x.asin);const old=p?.category_rank??x.previous_rank??null;return {old,delta:old==null?null:old-x.category_rank,prev:p}}
+function calcMetrics(data){
+  const cur=data.products,prev=data.prevProducts,top=cur.filter(x=>x.category_rank<=100),mid=cur.filter(x=>x.category_rank>=200&&x.category_rank<=400),prevTop=new Set(prev.filter(x=>x.category_rank<=100).map(x=>x.asin));
+  const curTop=new Set(top.map(x=>x.asin));const newTop=top.filter(x=>!prevTop.has(x.asin));const exited=[...prevTop].filter(a=>!curTop.has(a));
+  const p0=cur.filter(x=>{const d=rankDiff(data,x);return (d.delta||0)>=50||(x.category_rank<=100&&d.old!=null&&d.old>100)||(x.category_rank<=200&&d.old!=null&&d.old>200)});
+  const youngTop=top.filter(x=>x.days_since_launch!=null&&x.days_since_launch<=180);const midBreak=mid.filter(x=>(rankDiff(data,x).delta||0)>=20);
+  const structure=deriveStructures(data);const posStruct=structure.filter(x=>x.delta>0.5).length;
+  const churn=pct(newTop.length+exited.length,Math.max(1,top.length+(prev.filter(x=>x.category_rank<=100).length)));
+  const index=Math.round(clamp(34+Math.min(20,p0.length*1.6)+Math.min(12,newTop.length*1.2)+Math.min(12,midBreak.length*2)+Math.min(12,pct(youngTop.length,top.length)/4)+Math.min(10,posStruct*2)));
+  return {total:cur.length,top:top.length,mid:mid.length,topDistinct:new Set(top.map(x=>x.category_rank)).size,newTop:newTop.length,exited:exited.length,p0:p0.length,youngShare:pct(youngTop.length,top.length),churn,index,price:median(cur.map(x=>x.price_gbp)),salesCoverage:pct(cur.filter(x=>x.sales_estimate!=null).length,cur.length),imageCoverage:pct(cur.filter(x=>x.image_url).length,cur.length),reviewCoverage:pct(cur.filter(x=>x.review_count!=null).length,cur.length),midBreak:midBreak.length};
+}
+function deriveStructures(data){
+  const dims=[['product_type','产品类型'],['colour_style','颜色风格'],['occasion','场景'],['material','材质'],['pack_size','数量规格'],['size_text','尺寸']];const rows=[];
+  for(const [field,label] of dims){const c=new Map(),p=new Map();for(const x of data.products)for(const t of splitTags(x[field]))c.set(t,(c.get(t)||0)+1);for(const x of data.prevProducts)for(const t of splitTags(x[field]))p.set(t,(p.get(t)||0)+1);for(const [tag,n] of c){const share=pct(n,data.products.length),pn=p.get(tag)||0,ps=pct(pn,data.prevProducts.length),delta=share-ps;rows.push({field,dimension:label,label:tag,count:n,share,prevCount:pn,prevShare:ps,delta,newAppear:pn===0&&n>0})}}
+  return rows.sort((a,b)=>b.share-a.share);
+}
+function topStructure(data,field){return data.structureDerived.filter(x=>x.field===field).sort((a,b)=>b.delta-a.delta)[0]||null}
+function sceneMetric(data,name){if(!data)return null;const match=x=>`${x.occasion||''} ${x.title||''}`.toLowerCase().includes(name.toLowerCase());const cur=data.products.filter(match).length,prev=data.prevProducts.filter(match).length;return {cur,share:pct(cur,data.products.length),prevShare:pct(prev,data.prevProducts.length),delta:pct(cur,data.products.length)-pct(prev,data.prevProducts.length)}}
+function priceOpportunity(data){const s=marketMeta().symbol,bins=[[`< ${s}5`,0,5],[`${s}5–6.99`,5,7],[`${s}7–9.99`,7,10],[`${s}10–14.99`,10,15],[`≥ ${s}15`,15,1e9]];let best=null;for(const [name,a,b] of bins){const arr=data.products.filter(x=>x.price_gbp!=null&&Number(x.price_gbp)>=a&&Number(x.price_gbp)<b);if(arr.length<3)continue;const top=pct(arr.filter(x=>x.category_rank<=100).length,arr.length),young=pct(arr.filter(x=>x.days_since_launch!=null&&x.days_since_launch<=180).length,arr.length),move=pct(arr.filter(x=>(rankDiff(data,x).delta||0)>=20).length,arr.length),score=top*.45+young*.3+move*.25;if(!best||score>best.score)best={name,count:arr.length,score,top,young,move}}return best}
+function productScore(data,x){const d=rankDiff(data,x),delta=d.delta||0;let s=24;if(delta>=200)s+=28;else if(delta>=100)s+=22;else if(delta>=50)s+=17;else if(delta>=20)s+=11;else if(delta>0)s+=5;if(x.category_rank<=100)s+=16;else if(x.category_rank<=200)s+=10;else if(x.category_rank<=400)s+=6;if(x.days_since_launch!=null&&x.days_since_launch<=180)s+=10;else if(x.days_since_launch!=null&&x.days_since_launch<=365)s+=5;if(x.sales_estimate>=100)s+=9;else if(x.sales_estimate>=50)s+=6;if(x.review_count!=null&&x.review_count<100)s+=5;if(x.category_rank<=100&&d.old!=null&&d.old>100)s+=10;return Math.round(clamp(s))}
+function opportunityType(data,x){const d=rankDiff(data,x),delta=d.delta||0;if(x.category_rank<=100&&d.old!=null&&d.old>100)return '🌱 新品突破型';if(delta>=100)return '🔥 爆发前移型';if(x.days_since_launch!=null&&x.days_since_launch<=180)return '🌱 新品潜力型';if(delta>=20)return '↗ 持续增长型';return '👀 观察型'}
+function opportunityReason(data,x){const d=rankDiff(data,x),arr=[];if((d.delta||0)>=20)arr.push(`排名前移${d.delta}位`);if(x.category_rank<=100)arr.push('已进入≤100');if(x.days_since_launch!=null&&x.days_since_launch<=180)arr.push(`上架${x.days_since_launch}天`);if(x.sales_estimate!=null)arr.push(`销量${x.sales_estimate}`);if(x.review_count!=null&&x.review_count<100)arr.push('评论门槛较低');return arr.slice(0,3).join(' · ')||'持续观察排名与销量'}
+function priority(data,x){const d=rankDiff(data,x),delta=d.delta||0;if((x.category_rank<=100&&d.old!=null&&d.old>100)||delta>=100)return 'P0';if(delta>=50)return 'P1';if(delta>=20)return 'P2';return 'P3'}
+function moveCell(data,x){const d=rankDiff(data,x);if(d.delta==null)return '<span class="flat">—</span>';if(d.delta>0)return `<span class="up">↑ ${fmt(d.delta)}</span>`;if(d.delta<0)return `<span class="down">↓ ${fmt(Math.abs(d.delta))}</span>`;return '<span class="flat">0</span>'}
+function tagCell(x){return [x.product_type,x.colour_style,x.occasion].filter(Boolean).flatMap(splitTags).slice(0,3).map(v=>`<span class="tag">${esc(v)}</span>`).join('')||'—'}
+function priorityBadge(p){const cls=p==='P0'?'bad':p==='P1'?'warn':p==='P2'?'info':'good';return `<span class="badge ${cls}">${p}</span>`}
+const decisionKey=(categoryKey,asin)=>`${categoryKey}|${String(asin||'').toUpperCase()}`;
+function decisionCell(categoryKey,x){
+  const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{},value=saved.decision||'',locked=value==='是';
+  return `<select class="development-select${locked?' locked':''}" data-role="decision" data-category="${esc(categoryKey)}" data-asin="${esc(x.asin)}" data-locked="${locked?'1':'0'}" aria-label="是否开发 ${esc(x.asin)}" title="${locked?'已锁定，不能修改':'选择是否开发'}" ${locked?'disabled':''}><option value="" ${value?'':'selected'} disabled>请选择</option><option value="是" ${value==='是'?'selected':''}>${locked?'是 · 已锁定':'是'}</option><option value="否" ${value==='否'?'selected':''}>否</option></select>`;
+}
+function developerCell(categoryKey,x){
+  const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{},owner=saved.developer_name||'',enabled=saved.decision==='是',locked=enabled;
+  return `<select class="developer-select${locked?' locked':''}" data-role="developer" data-category="${esc(categoryKey)}" data-asin="${esc(x.asin)}" data-locked="${locked?'1':'0'}" aria-label="开发负责人 ${esc(x.asin)}" title="${locked?'负责人已随开发状态锁定':'选择开发负责人'}" ${locked||!enabled?'disabled':''}><option value="" ${owner?'':'selected'}>请选择</option><option value="芷瑜" ${owner==='芷瑜'?'selected':''}>芷瑜</option><option value="乐辉" ${owner==='乐辉'?'selected':''}>乐辉</option></select>`;
+}
+function decisionStatusCell(categoryKey,x){
+  const saved=DEVELOPMENT_DECISIONS.get(decisionKey(categoryKey,x.asin))||{};
+  if(saved.decision==='是')return `<span class="development-status yes">${esc(saved.developer_name||'待指定')} · 已锁定</span>`;
+  if(saved.decision==='否')return '<span class="development-status no">暂不开发</span>';
+  return '<span class="development-status pending">未选择</span>';
+}
+function bindDevelopmentSelectors(){
+  document.querySelectorAll('select[data-role]:not([data-bound])').forEach(el=>{
+    el.dataset.bound='1';
+    el.addEventListener('change',async()=>{
+      if(el.dataset.locked==='1')return;
+      const row=el.closest('tr'),decisionEl=row.querySelector('[data-role="decision"]'),ownerEl=row.querySelector('[data-role="developer"]');
+      const key=decisionKey(el.dataset.category,el.dataset.asin),old=DEVELOPMENT_DECISIONS.get(key)||{},decision=decisionEl.value;
+      if(el.dataset.role==='decision'&&decision==='是'){ownerEl.disabled=false;if(!ownerEl.value){ownerEl.focus();return}}
+      if(decision==='否'){ownerEl.value='';ownerEl.disabled=true}
+      const developerName=decision==='是'?ownerEl.value:null;if(decision==='是'&&!developerName)return;
+      decisionEl.disabled=true;ownerEl.disabled=true;el.classList.add('saving');
+      try{if(typeof window.__dashboardPrivateAction!=='function')throw new Error('私有保存通道未就绪');const rows=await window.__dashboardPrivateAction('upsert_development_decision',{marketplace:ACTIVE_MARKET,category_key:el.dataset.category,asin:el.dataset.asin,decision,developer_name:developerName});const saved=Array.isArray(rows)&&rows[0]?rows[0]:{decision,developer_name:developerName};DEVELOPMENT_DECISIONS.set(key,saved);el.classList.add('saved');setTimeout(()=>el.classList.remove('saved'),1200);renderDevelopmentDecisionViews()}
+      catch(e){decisionEl.value=old.decision||'';ownerEl.value=old.developer_name||'';if(e.status===409)await refreshDevelopmentDecisions(true);alert(e.message||'开发状态保存失败，请重试。')}
+      finally{if(decisionEl.isConnected&&decisionEl.dataset.locked!=='1'){decisionEl.disabled=false;ownerEl.disabled=decisionEl.value!=='是'}el.classList.remove('saving')}
+    });
+  });
+}
+async function loadDevelopmentDecisions(){
+  let lastError;
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const rows=await q(`development_decisions?select=category_key,asin,decision,developer_name,selected_at,updated_at&marketplace=eq.${ACTIVE_MARKET}`);
+      DEVELOPMENT_DECISIONS=new Map((rows||[]).map(x=>[decisionKey(x.category_key,x.asin),x]));
+      return;
+    }catch(e){lastError=e}
+  }
+  console.warn('开发状态读取失败，保留当前页面已加载状态。',lastError);
+}
+function developmentDecisionSignature(){return [...DEVELOPMENT_DECISIONS.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}:${v.decision||''}:${v.developer_name||''}:${v.updated_at||''}`).join('|')}
+function renderDevelopmentDecisionViews(){if($('marketTopRows'))renderMarketTop();const detail=$('detailPanel');if(detail?.classList.contains('active')&&STORE[activeKey])renderDetailTop(STORE[activeKey])}
+let developmentSyncBusy=false;
+async function refreshDevelopmentDecisions(force=false){
+  if(developmentSyncBusy)return;
+  if(!force&&document.activeElement?.matches?.('.development-select,.developer-select'))return;
+  developmentSyncBusy=true;const before=developmentDecisionSignature();
+  try{await loadDevelopmentDecisions();if(force||before!==developmentDecisionSignature())renderDevelopmentDecisionViews()}
+  finally{developmentSyncBusy=false}
+}
+
+function setBoard(prefix,data){
+  const m=data?.metrics;if(!m)return;
+  $(prefix+'Top').textContent=fmt(m.top);$(prefix+'Mid').textContent=fmt(m.mid);$(prefix+'Total').textContent=fmt(m.total);$(prefix+'Price').textContent=money(m.price);$(prefix+'Churn').textContent=m.churn.toFixed(1)+'%';$(prefix+'P0').textContent=fmt(m.p0);$(prefix+'Young').textContent=m.youngShare.toFixed(1)+'%';$(prefix+'Index').textContent=m.index;
+  const pm=data.prev?calcSimpleRun(data.prev):null;$(prefix+'TopDelta').textContent=pm?deltaText(m.top-pm.top,'vs 上轮'):'首轮数据';$(prefix+'MidDelta').textContent=pm?deltaText(m.mid-pm.mid,'vs 上轮'):'首轮数据';
+}
+function calcSimpleRun(run){return {top:Number(run.top100_count)||0,mid:Number(run.midband_count)||0}}
+function deltaText(n,label=''){return `${n>0?'↑ +':n<0?'↓ ': '→ '}${n}${label?' '+label:''}`}
+
+function renderDual(){
+  const b=STORE.party_balloons,p=STORE.party_packs;
+  $('balloonsTime').textContent=b?when(b.latest.collected_at):'暂无';$('packsTime').textContent=p?when(p.latest.collected_at):'待采集';
+  if(b)setBoard('b',b);if(p){setBoard('p',p);$('packsBoard').classList.remove('pending-board');$('packsPlaceholder').style.display='none';$('packsState').textContent='实时';$('packsState').className='board-state live';$('packsDot').className='tiny-dot live';}else{$('packsDot').className='tiny-dot pending'}
+  const bIdx=b?.metrics.index??0,pIdx=p?.metrics.index??0;$('bIndexBar').style.width=bIdx+'%';$('bIndexText').textContent=b?`${bIdx}/100`:'—';$('pIndexBar').style.width=p?pIdx+'%':'0%';$('pIndexText').textContent=p?`${pIdx}/100`:'待采集';
+  if(b){const po=priceOpportunity(b),st=topStructure(b,'product_type'),sc=topStructure(b,'occasion');$('bRadarBreak').innerHTML=`<b>${b.metrics.p0}</b> 个P0；中段强前移 ${b.metrics.midBreak}`;$('bRadarNew').innerHTML=`≤180天新品占比 <b>${b.metrics.youngShare.toFixed(1)}%</b>`;$('bRadarPrice').innerHTML=po?`最佳观察价格带 <b>${po.name}</b>`:'样本不足';$('bRadarStruct').innerHTML=st?`<b>${esc(st.label)}</b> ${st.delta>=0?'+':''}${st.delta.toFixed(1)}pct`:'暂无结构变化';$('bRadarScene').innerHTML=sc?`<b>${esc(sc.label)}</b> ${sc.delta>=0?'+':''}${sc.delta.toFixed(1)}pct`:'暂无场景信号';}
+  if(p){const po=priceOpportunity(p),st=topStructure(p,'product_type'),sc=topStructure(p,'occasion');$('pRadarBreak').innerHTML=`<b>${p.metrics.p0}</b> 个P0；中段强前移 ${p.metrics.midBreak}`;$('pRadarNew').innerHTML=`≤180天新品占比 <b>${p.metrics.youngShare.toFixed(1)}%</b>`;$('pRadarPrice').innerHTML=po?`最佳观察价格带 <b>${po.name}</b>`:'样本不足';$('pRadarStruct').innerHTML=st?`<b>${esc(st.label)}</b> ${st.delta>=0?'+':''}${st.delta.toFixed(1)}pct`:'暂无结构变化';$('pRadarScene').innerHTML=sc?`<b>${esc(sc.label)}</b> ${sc.delta>=0?'+':''}${sc.delta.toFixed(1)}pct`:'暂无场景信号';}
+  renderScenes();renderMarketTop();renderQuality();renderDualSummary();renderSync();
+}
+function renderDualSummary(){const b=STORE.party_balloons,p=STORE.party_packs;if(!b){$('dualSummaryText').textContent='Party Balloons 暂无可用批次。';return}const bits=[`Party Balloons 当前≤100样本 ${b.metrics.top} 个，#200–400 潜力池 ${b.metrics.mid} 个，P0机会 ${b.metrics.p0} 个。`];if(p){const lead=p.metrics.index>b.metrics.index?'Party Packs':'Party Balloons';bits.push(`Party Packs 当前≤100样本 ${p.metrics.top} 个，P0机会 ${p.metrics.p0} 个；规则机会指数暂由 ${lead} 领先。`)}else bits.push('Party Packs 尚未采集，因此跨类目结论暂不生成，页面只展示 Balloons 真实数据与 Packs 占位结构。');$('dualSummaryText').textContent=bits.join(' ')}
+function renderSync(){const b=STORE.party_balloons,p=STORE.party_packs;if(b&&p){const gap=Math.abs(new Date(b.latest.collected_at)-new Date(p.latest.collected_at))/60000;const ok=gap<=60;$('globalStatus').textContent=ok?'● 双类目数据可比较':'⚠ 双类目时间不同步';$('globalStatus').className=ok?'status-pill':'status-pill warn';$('syncStatus').textContent=`采集时间差 ${Math.round(gap)} 分钟`; $('compareHint').textContent=ok?'同一时间窗口，可横向比较':'时间差较大，请谨慎比较';}else if(b){$('globalStatus').textContent='● Balloons 已连接';$('globalStatus').className='status-pill';$('syncStatus').textContent='Party Packs 待采集';$('compareHint').textContent='Party Packs 待首次采集';}}
+function renderScenes(){const scenes=[['Birthday','生日派对'],['Baby Shower','迎婴派对'],['Wedding','婚礼派对'],['Hen Party','新娘单身派对']];const b=STORE.party_balloons,p=STORE.party_packs;$('sceneCompare').innerHTML=scenes.map(([key,label])=>{const bm=sceneMetric(b,key),pm=sceneMetric(p,key);const trend=m=>!m?'待采集':`${m.share.toFixed(1)}% ${m.delta>0?'↑ +':m.delta<0?'↓ ':'→ '}${m.delta.toFixed(1)}个百分点`;return `<div class="scene-placeholder"><b>${label}</b><span class="${bm?.delta>0?'trend-up':bm?.delta<0?'trend-down':''}">气球类目：${trend(bm)}</span><span class="${pm?.delta>0?'trend-up':pm?.delta<0?'trend-down':''}">派对套装类目：${trend(pm)}</span></div>`}).join('');$('sceneNote').textContent=p?'双类目场景口径已同步':'等待派对套装类目数据'}
+function renderMarketTop(){let rows=[];for(const d of [STORE.party_balloons,STORE.party_packs].filter(Boolean)){rows.push(...d.products.map(x=>({d,x,score:productScore(d,x)})))}rows.sort((a,b)=>b.score-a.score);rows=rows.slice(0,100);$('marketTopNote').textContent=STORE.party_packs?`双类目合并排序 · 当前显示${rows.length}个`:`当前仅 Party Balloons · 当前显示${rows.length}个`;$('marketTopRows').innerHTML=rows.length?rows.map((o,index)=>`<tr><td class="rank">${index+1}</td><td>${categoryTag(o.d.key)}</td><td class="development-col">${decisionCell(o.d.key,o.x)}</td><td class="developer-col">${developerCell(o.d.key,o.x)}</td><td>${productCell(o.x)}</td><td class="rank">#${fmt(o.x.category_rank)}</td><td>${moveCell(o.d,o.x)}</td><td>${fmt(o.x.days_since_launch)}</td><td>${o.x.parent_sales_estimate==null?'—':fmt(o.x.parent_sales_estimate)}</td></tr>`).join(''):'<tr><td colspan="9" class="empty">暂无数据。</td></tr>';bindImgs();bindDevelopmentSelectors()}
+function renderQuality(){const fill=(id,timeId,d)=>{if(!d)return;$(timeId).textContent=`最近采集 ${when(d.latest.collected_at)}`;$(id).innerHTML=`<div><span>销量覆盖率</span><b>${d.metrics.salesCoverage.toFixed(1)}%</b></div><div><span>主图覆盖率</span><b>${d.metrics.imageCoverage.toFixed(1)}%</b></div><div><span>评论覆盖率</span><b>${d.metrics.reviewCoverage.toFixed(1)}%</b></div><div><span>不同BSR位置</span><b>${d.metrics.topDistinct}</b></div>`};fill('bQuality','bQualityTime',STORE.party_balloons);if(STORE.party_packs){$('pQuality').className='mini-metrics quality-mini';fill('pQuality','pQualityTime',STORE.party_packs)}}
+
+function renderDetail(key){activeKey=key;const d=STORE[key];const name=key==='party_packs'?'Party Packs':'Party Balloons';$('detailEyebrow').textContent=`${marketMeta().amazon} · ${name}`;$('detailTitle').textContent=`${name} 类目监控`;if(!d){renderEmptyDetail(name);return}$('detailStatus').textContent='● 动态后台已连接';$('detailStatus').className='status-pill';$('detailTime').textContent=when(d.latest.collected_at);$('detailSummaryText').textContent=`当前有效ASIN ${d.metrics.total} 个，≤100样本 ${d.metrics.top} 个，#200–400潜力池 ${d.metrics.mid} 个，P0机会 ${d.metrics.p0} 个，规则机会指数 ${d.metrics.index}/100。`;
+  $('detailKpis').innerHTML=[['排名≤100',d.metrics.top,'头部样本'],['#200–400',d.metrics.mid,'潜力观察池'],['有效ASIN',d.metrics.total,'最新完整批次'],['价格中位数',money(d.metrics.price),'当前样本'],['Top100换手',d.metrics.churn.toFixed(1)+'%','新进/退出'],['P0机会',d.metrics.p0,'突破/快速前移'],['≤180天新品',d.metrics.youngShare.toFixed(1)+'%','Top100新品占比'],['机会指数',d.metrics.index,'规则评分 /100']].map((x,i)=>`<article class="metric-card ${i===0?'accent-blue':i===5?'accent-red':''}"><div class="metric-label">${x[0]}</div><div class="metric-value">${x[1]}</div><div class="metric-note">${x[2]}</div></article>`).join('');
+  const po=priceOpportunity(d),st=topStructure(d,'product_type'),sc=topStructure(d,'occasion');$('detailRadar').innerHTML=[['🚀 快速突破',`${d.metrics.p0} 个P0；中段强前移 ${d.metrics.midBreak}`],['🌱 新品潜力',`≤180天新品占比 ${d.metrics.youngShare.toFixed(1)}%`],['💰 价格机会',po?`${po.name} · ≤100率 ${po.top.toFixed(1)}%`:'样本不足'],['🧩 结构机会',st?`${esc(st.label)} ${st.delta>=0?'+':''}${st.delta.toFixed(1)}pct`:'暂无明显结构增长'],['🎯 场景机会',sc?`${esc(sc.label)} ${sc.delta>=0?'+':''}${sc.delta.toFixed(1)}pct`:'暂无明显场景增长']].slice(0,4).map(x=>`<article class="radar-card"><div class="radar-title">${x[0]}</div><div class="radar-body">${x[1]}</div></article>`).join('');
+  renderDetailTop(d);renderDetailChanges(d);renderDetailStructure(d);renderDetailMid(d);renderDetailHighPrice(d);
+}
+function renderEmptyDetail(name){$('detailStatus').textContent='待采集';$('detailStatus').className='status-pill warn';$('detailSummaryText').textContent=`${name} 页面已经搭好，但当前后台还没有该类目的采集批次。首次采集后会自动填充。`;$('detailTime').textContent='待采集';$('detailKpis').innerHTML=Array.from({length:8},(_,i)=>`<article class="metric-card"><div class="metric-label">${['排名≤100','#200–400','有效ASIN','价格中位数','Top100换手','P0机会','≤180天新品','机会指数'][i]}</div><div class="metric-value">—</div><div class="metric-note">待采集</div></article>`).join('');$('detailRadar').innerHTML='<article class="radar-card"><div class="radar-title">等待首次数据</div><div class="radar-body">采集完成后自动生成机会雷达。</div></article>';$('detailTopRows').innerHTML='<tr><td colspan="9" class="empty">暂无数据。</td></tr>';$('detailChangeRows').innerHTML='<tr><td colspan="9" class="empty">暂无数据。</td></tr>';$('detailStructRows').innerHTML='<tr><td colspan="6" class="empty">暂无数据。</td></tr>';$('detailMidRows').innerHTML='<tr><td colspan="10" class="empty">暂无数据。</td></tr>';$('detailPriority').innerHTML='';$('detailStructCards').innerHTML='';$('detailMidPriority').innerHTML='';$('detailChangeCount').textContent='待采集';$('detailMidCount').textContent='待采集';$('detailHighPriceCount').textContent='待采集';$('detailHighPriceKpis').innerHTML='';$('detailHighPriceRows').innerHTML='<tr><td colspan="9" class="empty">暂无数据。</td></tr>'}
+function renderDetailTop(d){let rows=d.products.map(x=>({x,score:productScore(d,x)})).sort((a,b)=>b.score-a.score).slice(0,50);$('detailTopNote').textContent=`从 ${d.products.length} 个ASIN筛选，最多显示50个`;$('detailTopRows').innerHTML=rows.length?rows.map(o=>`<tr><td class="development-col">${decisionStatusCell(d.key,o.x)}</td><td>${productCell(o.x)}</td><td>${opportunityType(d,o.x)}</td><td class="rank">#${fmt(o.x.category_rank)}</td><td>${moveCell(d,o.x)}</td><td>—</td><td>${fmt(o.x.days_since_launch)}</td><td>${o.x.parent_sales_estimate==null?'—':fmt(o.x.parent_sales_estimate)}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">暂无数据。</td></tr>';bindImgs()}
+function renderDetailChanges(d){const rows=d.products.filter(x=>{const rd=rankDiff(d,x);return Math.abs(rd.delta||0)>=20||(x.category_rank<=100&&rd.old!=null&&rd.old>100)}).sort((a,b)=>Math.abs(rankDiff(d,b).delta||0)-Math.abs(rankDiff(d,a).delta||0));const cs={P0:0,P1:0,P2:0,P3:0};rows.forEach(x=>cs[priority(d,x)]++);$('detailChangeCount').textContent=`${rows.length} 个异动ASIN`;$('detailPriority').innerHTML=['P0','P1','P2','P3'].map((p,i)=>`<article class="priority-card p${i}"><span>${p}${['关键突破','强异动','明显异动','一般波动'][i]}</span><b>${cs[p]}</b></article>`).join('');$('detailChangeRows').innerHTML=rows.length?rows.slice(0,100).map(x=>{const rd=rankDiff(d,x),p=priority(d,x);return `<tr><td>${productCell(x)}</td><td>${priorityBadge(p)}</td><td class="rank">#${fmt(x.category_rank)}</td><td>${rd.old==null?'—':'#'+fmt(rd.old)}</td><td>${moveCell(d,x)}</td><td>${money(x.price_gbp)}</td><td>${fmt(x.sales_estimate)}</td><td>${x.rating??'—'} / ${fmt(x.review_count)}</td><td>${tagCell(x)}</td></tr>`}).join(''):'<tr><td colspan="9" class="empty">暂无达到阈值的异动。</td></tr>';bindImgs()}
+function renderDetailStructure(d){const r=d.structureDerived;const growth=r.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,5),drop=r.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta).slice(0,5),main=[...r].sort((a,b)=>b.share-a.share).slice(0,5),fresh=r.filter(x=>x.newAppear).slice(0,5);const block=(title,arr)=>`<article class="structure-card"><h3>${title}</h3><div class="struct-list">${arr.length?arr.map(x=>`<div class="struct-line"><span>${esc(x.label)}</span><b class="${x.delta>=0?'pos':'neg'}">${x.delta>=0?'+':''}${x.delta.toFixed(1)}pct</b></div>`).join(''):'<div class="pending-text">暂无明显信号</div>'}</div></article>`;$('detailStructCards').innerHTML=block('🔥 快速增长',growth)+block('↓ 快速下降',drop)+block('★ 当前主流',main)+block('✦ 新出现',fresh);$('detailStructRows').innerHTML=r.length?r.slice(0,100).map(x=>`<tr><td>${x.dimension}</td><td>${esc(x.label)}</td><td>${x.count}</td><td>${x.share.toFixed(1)}%</td><td>${x.prevShare.toFixed(1)}%</td><td class="${x.delta>=0?'up':'down'}">${x.delta>=0?'+':''}${x.delta.toFixed(1)}pct</td></tr>`).join(''):'<tr><td colspan="6" class="empty">暂无结构数据。</td></tr>'}
+function midScore(d,x){const rd=rankDiff(d,x),delta=rd.delta||0;let s=35+Math.min(35,Math.max(0,delta)/4);if(x.sales_estimate>=100)s+=12;else if(x.sales_estimate>=50)s+=7;if(x.days_since_launch!=null&&x.days_since_launch<=180)s+=10;if(x.category_rank<=250)s+=8;return Math.round(clamp(s))}
+function renderDetailMid(d){const rows=d.products.filter(x=>x.category_rank>=200&&x.category_rank<=400).sort((a,b)=>(rankDiff(d,b).delta||-999)-(rankDiff(d,a).delta||-999));const counts=[0,0,0,0];rows.forEach(x=>{const n=rankDiff(d,x).delta||0;if(n>=50)counts[0]++;else if(n>=20)counts[1]++;else if(n>0)counts[2]++;else counts[3]++});$('detailMidCount').textContent=`${rows.length} 个ASIN`;$('detailMidPriority').innerHTML=['P0快速前移≥50','P1前移20–49','P2前移1–19','P3持平/后退'].map((t,i)=>`<article class="priority-card p${i}"><span>${t}</span><b>${counts[i]}</b></article>`).join('');$('detailMidRows').innerHTML=rows.length?rows.map(x=>{const rd=rankDiff(d,x),pr=rd.delta>=50?'P0':rd.delta>=20?'P1':rd.delta>0?'P2':'P3',score=midScore(d,x);return `<tr><td>${productCell(x)}</td><td>${priorityBadge(pr)}</td><td class="rank">#${fmt(x.category_rank)}</td><td>${rd.old==null?'—':'#'+fmt(rd.old)}</td><td>${moveCell(d,x)}</td><td>${money(x.price_gbp)}</td><td>${fmt(x.sales_estimate)}</td><td>${fmt(x.days_since_launch)}</td><td><span class="score-pill">${score}</span></td><td>${score>=75?'优先核查连续突破':score>=60?'持续观察':'常规观察'}</td></tr>`}).join(''):'<tr><td colspan="10" class="empty">暂无#200–400商品。</td></tr>';bindImgs()}
+
+
+function renderDetailHighPrice(d){
+  const hp=HIGH_PRICE_STORE[d.key];
+  const rankData=hp||d;
+  const eligible=(hp?.products||d.products).filter(x=>Number(x.price_gbp)>=17.99&&Number(x.parent_sales_estimate)>=100);
+  const rows=[...eligible].sort((a,b)=>{
+    const an=a.days_since_launch!=null&&a.days_since_launch<=90?1:0,bn=b.days_since_launch!=null&&b.days_since_launch<=90?1:0;
+    if(bn!==an)return bn-an;
+    const ad=rankDiff(rankData,a).delta??-9999,bd=rankDiff(rankData,b).delta??-9999;
+    return bd-ad||Number(b.parent_sales_estimate||0)-Number(a.parent_sales_estimate||0);
+  });
+  const young=rows.filter(x=>x.days_since_launch!=null&&x.days_since_launch<=90);
+  const rising=rows.filter(x=>(rankDiff(rankData,x).delta||0)>0);
+  const med=median(rows.map(x=>x.price_gbp));
+  $('detailHighPriceCount').textContent=`${rows.length} 个符合条件产品`;
+  $('detailHighPriceKpis').innerHTML=[
+    ['符合条件产品',fmt(rows.length),hp?'Amazon前端高价专用批次':'普通批次临时筛选'],
+    ['≤90天新品',fmt(young.length),rows.length?`${pct(young.length,rows.length).toFixed(1)}%`:'暂无符合条件产品'],
+    ['价格中位数',money(med),'筛选后样本'],
+    ['排名上升',fmt(rising.length),rows.length?`${pct(rising.length,rows.length).toFixed(1)}%`:'暂无可比较产品']
+  ].map((x,i)=>`<article class="metric-card ${i===1?'accent-blue':i===3?'accent-red':''}"><div class="metric-label">${x[0]}</div><div class="metric-value">${x[1]}</div><div class="metric-note">${x[2]}</div></article>`).join('');
+  $('detailHighPriceRows').innerHTML=rows.length?rows.map(x=>{
+    const rd=rankDiff(rankData,x),isNew=x.days_since_launch!=null&&x.days_since_launch<=90;
+    const stage=isNew?'<span class="badge good">新品≤90天</span>':x.days_since_launch!=null&&x.days_since_launch<=180?'<span class="badge info">成长期91–180天</span>':'<span class="badge">成熟产品</span>';
+    const judgement=rd.delta==null?'暂无上一期排名':rd.delta>=20?'排名明显上升':rd.delta>0?'排名小幅上升':rd.delta<=-20?'排名明显下降':rd.delta<0?'排名小幅下降':'排名持平';
+    return `<tr><td>${productCell(x)}</td><td><b>${money(x.price_gbp)}</b></td><td><b>${fmt(x.parent_sales_estimate)}</b></td><td>${stage}</td><td class="rank">${x.category_rank==null?'—':'#'+fmt(x.category_rank)}</td><td>${rd.old==null?'—':'#'+fmt(rd.old)}</td><td>${moveCell(rankData,x)}</td><td>${fmt(x.days_since_launch)}</td><td>${judgement}</td></tr>`;
+  }).join(''):`<tr><td colspan="9" class="empty">当前采集样本中暂无“售价≥${marketMeta().symbol}17.99且父体月销量≥100”的产品。</td></tr>`;
+  bindImgs();
+}
+
+function bindNav(){document.querySelectorAll('.category-tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.category-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');const k=b.dataset.category;if(k==='compare'){$('comparePanel').classList.add('active');$('detailPanel').classList.remove('active')}else{$('comparePanel').classList.remove('active');$('detailPanel').classList.add('active');renderDetail(k)}}));document.querySelectorAll('.detail-tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.detail-tabs button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.detail-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.detail).classList.add('active')}))}
+function applyMarketCopy(){const m=marketMeta();document.documentElement.dataset.market=m.code;document.title=`Amazon ${m.code} 派对类目机会监控中心`;$('marketEyebrow').textContent=`${m.amazon} · Party Category Intelligence`;$('marketTitle').textContent=`${m.country}派对类目机会监控中心`;$('marketSummaryKicker').textContent=`${m.country.replace('站','')}派对市场智能摘要`;$('marketTopTitle').textContent=`${m.country.replace('站','')} Party Market 每日Top 100`;$('highPriceRule').innerHTML=`<strong>监控口径：</strong>采集端先在 ${m.amazon} 前端应用最低价 ${m.symbol}17.99 并逐页采集，再保留父体近30天月销量≥100的产品；新品定义为上架≤90天。高价采集完成后，本页自动读取专用批次。`;document.querySelectorAll('[data-market]').forEach(b=>b.classList.toggle('active',b.dataset.market===m.code))}
+async function switchMarket(code){if(code===ACTIVE_MARKET)return;ACTIVE_MARKET=code;STORE={party_balloons:null,party_packs:null};HIGH_PRICE_STORE={party_balloons:null,party_packs:null};DEVELOPMENT_DECISIONS=new Map();applyMarketCopy();await load()}
+async function load(){try{applyMarketCopy();$('globalStatus').textContent='正在读取双类目…';const [b,p,bh,ph]=await Promise.all([loadCategory('party_balloons'),loadCategory('party_packs'),loadHighPriceCategory('party_balloons_high_price').catch(()=>null),loadHighPriceCategory('party_packs_high_price').catch(()=>null),loadDevelopmentDecisions().catch(()=>{})]);STORE.party_balloons=b;STORE.party_packs=p;HIGH_PRICE_STORE.party_balloons=bh;HIGH_PRICE_STORE.party_packs=ph;renderDual();if($('detailPanel').classList.contains('active'))renderDetail(activeKey)}catch(e){console.error(e);$('globalStatus').textContent='后台连接异常';$('globalStatus').className='status-pill warn';$('dualSummaryText').textContent='读取后台数据时发生错误：'+e.message}}
+document.querySelectorAll('[data-market]').forEach(b=>b.addEventListener('click',()=>switchMarket(b.dataset.market)));
+bindNav();load();setInterval(load,43200000);setInterval(()=>refreshDevelopmentDecisions(false),5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDevelopmentDecisions(false)});window.addEventListener('focus',()=>refreshDevelopmentDecisions(false));
